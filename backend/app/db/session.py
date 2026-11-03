@@ -5,30 +5,30 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# Define a localização do banco SQLite
+# Define a localização do banco SQLite e cria o diretório se não existir
 PASTA_DADOS = Path(__file__).resolve().parents[2] / "data"
 PASTA_DADOS.mkdir(parents=True, exist_ok=True)
 URL_BANCO = f"sqlite:///{PASTA_DADOS / 'agendamento.db'}"
 
 # Cria a engine para conexão com o banco
 def criar_engine(url_banco: str) -> Engine:
-    argumentos_conexao = (
-        {"check_same_thread": False}
-        if url_banco.startswith("sqlite")
-        else {}
-    )
     return create_engine(
+        # Endereço do db
         url_banco,
-        connect_args=argumentos_conexao,
+        # Permite que o threads diferentes usem a mesma conexão, recomendado pro FastAPI mas não sei se vamos precisar
+        connect_args={"check_same_thread": False},
     )
 
-# Configura a engine e as sessões
+# Cria a engine para o banco definido na constante
 motor_banco = criar_engine(URL_BANCO)
+
+# Define SessaoLocal como função para criar nova sessão com o SQLAlchemy
 SessaoLocal = sessionmaker(
     bind=motor_banco,
 )
 
-# Função para fornecer sessão e fechar quando terminar a requisição
+# Cria um gerador para criar sessões com o SessaoLocal e fechar quando a requisição terminar
+# Esse é o que vamos usar nos endpoints para acesso ao db
 def obter_sessao_banco() -> Generator[Session, None, None]:
     sessao = SessaoLocal()
     try:
