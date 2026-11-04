@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, CheckConstraint, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import BaseModelos
 
@@ -55,3 +55,8 @@ class Estabelecimento(BaseModelos):
         String(255),
         nullable=False
     )
+    # Relacionamento 1 pra 1 com HorarioFuncionamento
+    horario_funcionamento: Mapped["HorarioFuncionamento"] = relationship(  # noqa: F821  # pyright: ignore[reportUndefinedVariable]
+            "HorarioFuncionamento",
+            back_populates="estabelecimento"
+        )
