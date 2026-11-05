@@ -2,6 +2,7 @@ from app.db import session
 from app.db.base import BaseModelos
 from app.models.estabelecimento import Estabelecimento  # noqa: F401
 from app.models.horario_funcionamento import HorarioFuncionamento  # noqa: F401
+from app.models.servico import Servico  # noqa: F401
 from sqlalchemy import inspect, text
 
 
@@ -52,16 +53,12 @@ def test_tabela_estabelecimento(tmp_path):
         # Lista as colunas com restrições de unique na tabela
         restricoes_unicas = {
             tuple(restricao["column_names"])
-            for restricao in inspecao.get_unique_constraints(
-                "estabelecimento"
-            )
+            for restricao in inspecao.get_unique_constraints("estabelecimento")
         }
         # Lista os nomes das restrições de check
         restricoes_check = {
             restricao["name"]
-            for restricao in inspecao.get_check_constraints(
-                "estabelecimento"
-            )
+            for restricao in inspecao.get_check_constraints("estabelecimento")
         }
         # Resultado esperado e comparações
         assert colunas == {
@@ -106,16 +103,12 @@ def test_tabela_horario_funcionamento(tmp_path):
         # Lista as colunas com restrições de unique na tabela
         restricoes_unicas = {
             tuple(restricao["column_names"])
-            for restricao in inspecao.get_unique_constraints(
-                "horario_funcionamento"
-            )
+            for restricao in inspecao.get_unique_constraints("horario_funcionamento")
         }
         # Lista os nomes das restrições de check
         restricoes_check = {
             restricao["name"]
-            for restricao in inspecao.get_check_constraints(
-                "horario_funcionamento"
-            )
+            for restricao in inspecao.get_check_constraints("horario_funcionamento")
         }
         # Lista as chaves estrangeiras da tabela
         chaves_estrangeiras = {
@@ -150,6 +143,65 @@ def test_tabela_horario_funcionamento(tmp_path):
         assert restricoes_check == {
             "ck_horario_abertura_fechamento",
             "ck_horario_intervalo",
+        }
+        assert chaves_estrangeiras == {
+            (
+                ("id_estabelecimento",),
+                "estabelecimento",
+                ("id_estabelecimento",),
+            ),
+        }
+    # Fecha a engine do SQLAlchemy
+    finally:
+        motor_teste.dispose()
+
+def test_tabela_servico(tmp_path):
+    # Cria banco e engine do SQLAlchemy temporários
+    url_banco = f"sqlite:///{tmp_path / 'teste.db'}"
+    motor_teste = session.criar_engine(url_banco)
+    try:
+        # Cria as tabelas com os models do SQLAlchemy
+        BaseModelos.metadata.create_all(motor_teste)
+        # Cria um objeto para inspecionar o db
+        inspecao = inspect(motor_teste)
+        # Lista o nome de cada coluna
+        colunas = {
+            coluna["name"]
+            for coluna in inspecao.get_columns("servico")
+        }
+        # Lista as colunas com restrições de unique na tabela
+        restricoes_unicas = {
+            tuple(restricao["column_names"])
+            for restricao in inspecao.get_unique_constraints("servico")
+        }
+        # Lista os nomes das restrições de check
+        restricoes_check = {
+            restricao["name"]
+            for restricao in inspecao.get_check_constraints("servico")
+        }
+        # Lista as chaves estrangeiras da tabela
+        chaves_estrangeiras = {
+            (
+                tuple(chave["constrained_columns"]),
+                chave["referred_table"],
+                tuple(chave["referred_columns"]),
+            )
+            for chave in inspecao.get_foreign_keys("servico")
+        }
+        # Resultado esperado e comparações
+        assert colunas == {
+            "id_servico",
+            "id_estabelecimento",
+            "nome",
+            "descricao",
+            "preco",
+            "duracao_minutos",
+            "ativo",
+        }
+        assert restricoes_unicas == set()
+        assert restricoes_check == {
+            "ck_servico_preco",
+            "ck_servico_duracao",
         }
         assert chaves_estrangeiras == {
             (

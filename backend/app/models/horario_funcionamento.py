@@ -10,7 +10,6 @@ from app.db.base import BaseModelos
 class HorarioFuncionamento(BaseModelos):
     # Nome da tabela
     __tablename__ = "horario_funcionamento"
-
     # Restrições
     __table_args__ = (
         # Valida abertura antes de fechamento
