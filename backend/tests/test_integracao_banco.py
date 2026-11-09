@@ -318,3 +318,17 @@ def test_tabela_agendamento(tmp_path):
     # Fecha a engine do SQLAlchemy
     finally:
         motor_teste.dispose()
+
+def test_relacionamentos_models():
+    # Cria objetos com os relacionamentso de cada model
+    relacionamentos_estabelecimento = inspect(Estabelecimento).relationships
+    relacionamentos_horario = inspect(HorarioFuncionamento).relationships
+    relacionamentos_servico = inspect(Servico).relationships
+    relacionamentos_agendamento = inspect(Agendamento).relationships
+    # Resultado esperado e comparações
+    assert relacionamentos_estabelecimento["horario_funcionamento"].back_populates == "estabelecimento"
+    assert relacionamentos_horario["estabelecimento"].back_populates == "horario_funcionamento"
+    assert relacionamentos_estabelecimento["servicos"].back_populates == "estabelecimento"
+    assert relacionamentos_servico["estabelecimento"].back_populates == "servicos"
+    assert relacionamentos_servico["agendamentos"].back_populates == "servico"
+    assert relacionamentos_agendamento["servico"].back_populates == "agendamentos"
