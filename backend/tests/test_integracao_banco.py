@@ -1,3 +1,4 @@
+import pytest
 from app.db import session
 from app.db.base import BaseModelos
 from app.models.agendamento import Agendamento  # noqa: F401
@@ -5,6 +6,7 @@ from app.models.estabelecimento import Estabelecimento  # noqa: F401
 from app.models.horario_funcionamento import HorarioFuncionamento  # noqa: F401
 from app.models.servico import Servico  # noqa: F401
 from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError
 
 
 # SQLAlchemy precisa dos imports de app.models.estabelecimento pra reconhecer os models para cada tabela
@@ -83,6 +85,45 @@ def test_tabela_estabelecimento(tmp_path):
             "ck_estabelecimento_tipo_documento",
             "ck_estabelecimento_documento",
         }
+    # Fecha a engine do SQLAlchemy
+    finally:
+        motor_teste.dispose()
+
+def test_rejeitar_servico_com_estabelecimento_inexistente(tmp_path):
+    # Cria banco e engine do SQLAlchemy temporários
+    url_banco = f"sqlite:///{tmp_path / 'teste.db'}"
+    motor_teste = session.criar_engine(url_banco)
+    try:
+        # Cria as tabelas com os models do SQLAlchemy
+        BaseModelos.metadata.create_all(motor_teste)
+        # Tenta cadastrar serviço com estabelecimento inexistente
+        # Espera um IntegrityError como resultado
+        with pytest.raises(IntegrityError), motor_teste.begin() as conexao:
+            conexao.execute(
+                text("""
+                        INSERT INTO servico (
+                            id_estabelecimento,
+                            nome,
+                            preco,
+                            duracao_minutos,
+                            ativo
+                        )
+                        VALUES (
+                            :id_estabelecimento,
+                            :nome,
+                            :preco,
+                            :duracao_minutos,
+                            :ativo
+                        )
+                    """),
+                {
+                    "id_estabelecimento": 999,
+                    "nome": "Corte de cabelo",
+                    "preco": 35.00,
+                    "duracao_minutos": 30,
+                    "ativo": True,
+                }
+            )
     # Fecha a engine do SQLAlchemy
     finally:
         motor_teste.dispose()
