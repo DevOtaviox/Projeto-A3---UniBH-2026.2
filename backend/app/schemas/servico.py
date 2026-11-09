@@ -24,7 +24,7 @@ class ServicoAtualizacao(BaseModel):
         # Lança erro se a atualização não alterar nenhum campo
         if not self.model_fields_set:
             raise ValueError("Informe ao menos um campo para atualização.")
-        # Lança erro antes de um campo obrigatório ir pro db com valor None
+        # Lança erro se um campo obrigatório for preenchido como None
         for campo in ("nome", "preco", "duracao_minutos", "ativo"):
             if campo in self.model_fields_set and getattr(self, campo) is None:
                 raise ValueError(f"O campo '{campo}' não pode ser nulo.")

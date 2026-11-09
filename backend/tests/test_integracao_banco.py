@@ -1,10 +1,10 @@
 import pytest
 from app.db import session
 from app.db.base import BaseModelos
-from app.models.agendamento import Agendamento  # noqa: F401
-from app.models.estabelecimento import Estabelecimento  # noqa: F401
-from app.models.horario_funcionamento import HorarioFuncionamento  # noqa: F401
-from app.models.servico import Servico  # noqa: F401
+from app.models.agendamento import Agendamento
+from app.models.estabelecimento import Estabelecimento
+from app.models.horario_funcionamento import HorarioFuncionamento
+from app.models.servico import Servico
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 
