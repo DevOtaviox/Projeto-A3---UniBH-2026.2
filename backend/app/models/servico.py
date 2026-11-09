@@ -59,3 +59,8 @@ class Servico(BaseModelos):
         "Estabelecimento",
         back_populates="servicos"
     )
+    # Relacionamento 1 pra muitos com Agendamento
+    agendamentos: Mapped[list["Agendamento"]] = relationship(  # noqa: F821  # pyright: ignore[reportUndefinedVariable]
+        "Agendamento",
+        back_populates="servico"
+    )

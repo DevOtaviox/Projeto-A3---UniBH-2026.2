@@ -1,5 +1,6 @@
 from app.db import session
 from app.db.base import BaseModelos
+from app.models.agendamento import Agendamento  # noqa: F401
 from app.models.estabelecimento import Estabelecimento  # noqa: F401
 from app.models.horario_funcionamento import HorarioFuncionamento  # noqa: F401
 from app.models.servico import Servico  # noqa: F401
@@ -208,6 +209,69 @@ def test_tabela_servico(tmp_path):
                 ("id_estabelecimento",),
                 "estabelecimento",
                 ("id_estabelecimento",),
+            ),
+        }
+    # Fecha a engine do SQLAlchemy
+    finally:
+        motor_teste.dispose()
+
+def test_tabela_agendamento(tmp_path):
+    # Cria banco e engine do SQLAlchemy temporários
+    url_banco = f"sqlite:///{tmp_path / 'teste.db'}"
+    motor_teste = session.criar_engine(url_banco)
+    try:
+        # Cria as tabelas com os models do SQLAlchemy
+        BaseModelos.metadata.create_all(motor_teste)
+        # Cria um objeto para inspecionar o db
+        inspecao = inspect(motor_teste)
+        # Lista o nome de cada coluna
+        colunas = {
+            coluna["name"]
+            for coluna in inspecao.get_columns("agendamento")
+        }
+        # Lista as colunas com restrições de unique na tabela
+        restricoes_unicas = {
+            tuple(restricao["column_names"])
+            for restricao in inspecao.get_unique_constraints("agendamento")
+        }
+        # Lista os nomes das restrições de check
+        restricoes_check = {
+            restricao["name"]
+            for restricao in inspecao.get_check_constraints("agendamento")
+        }
+        # Lista as chaves estrangeiras da tabela
+        chaves_estrangeiras = {
+            (
+                tuple(chave["constrained_columns"]),
+                chave["referred_table"],
+                tuple(chave["referred_columns"]),
+            )
+            for chave in inspecao.get_foreign_keys("agendamento")
+        }
+        # Resultado esperado e comparações
+        assert colunas == {
+            "id_agendamento",
+            "id_servico",
+            "nome_cliente",
+            "telefone_cliente",
+            "data_agendamento",
+            "horario_inicio",
+            "horario_fim",
+            "status",
+            "data_cadastro",
+            "data_cancelamento",
+        }
+        assert restricoes_unicas == set()
+        assert restricoes_check == {
+            "ck_agendamento_horario",
+            "ck_agendamento_status",
+            "ck_agendamento_data_cancelamento",
+        }
+        assert chaves_estrangeiras == {
+            (
+                ("id_servico",),
+                "servico",
+                ("id_servico",),
             ),
         }
     # Fecha a engine do SQLAlchemy
