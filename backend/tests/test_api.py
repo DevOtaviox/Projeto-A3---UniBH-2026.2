@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 
 def test_endpoint_health():
-    # Cria cliente de teste 
+    # Cria cliente de teste
     with TestClient(app) as cliente:
         # Consulta o endpoint de saúde
         resposta = cliente.get("/health")
@@ -36,3 +36,14 @@ def test_especificacao_openapi():
     assert dicionario["info"]["version"] == "1.0.0"
     assert "/health" in dicionario["paths"]
     assert "get" in dicionario["paths"]["/health"]
+
+def test_endpoint_health_database():
+    # Cria cliente de teste
+    with TestClient(app) as cliente:
+        # Consulta endpoint com conexão ao db
+        resposta = cliente.get("/health/database")
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert resposta.json() == {
+        "status": "ok",
+    }
