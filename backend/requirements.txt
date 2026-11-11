@@ -9,3 +9,7 @@ email-validator==2.3.0
 pytest==9.2.0
 pytest-cov==7.1.0
 httpx2==2.16.0
+
+# Auth e segurança
+pwdlib==0.3.1
+argon2-cffi==25.1.0
