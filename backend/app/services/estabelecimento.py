@@ -48,7 +48,7 @@ def cadastrar_estabelecimento(
     try:
         sessao.add(estabelecimento)
         sessao.commit()
-    # Levanta erro se houver algum dos dados duplicados
+    # Levanta e retorna erro se houver algum dos dados duplicados
     except IntegrityError as erro:
         sessao.rollback()
         raise EstabelecimentoDuplicadoError(
