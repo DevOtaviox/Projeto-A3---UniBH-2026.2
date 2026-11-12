@@ -23,7 +23,7 @@ def criar_dados_estabelecimento(
 # Fixture pra client de teste usando a sessão do conftest.py
 @pytest.fixture
 def cliente_teste(sessao_teste):
-    # Substitui a dependência de sessão pela sessão temporária
+    # Yield da sessão de teste ao invés da sessão real
     def obter_sessao_teste():
         yield sessao_teste
     # Override pra usar o db de teste ao invés do db real
