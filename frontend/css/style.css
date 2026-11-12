@@ -52,9 +52,6 @@ form {
   width: 280px;
 }
 
-/* TODO 3: estilize os inputs para ficarem como no esboço
-   (borda cinza escura ~2px, bem arredondada, padding interno).
-   Dica: um border-radius alto, tipo 999px, dá o formato de pílula. */
 input {
     display: flex;
     flex-direction: column;
@@ -76,8 +73,6 @@ input {
   text-align: center;
 }
 
-/* TODO 4: estilize o botão (fundo var(--azul), texto branco em negrito,
-   formato de pílula, centralizado). Dica: align-self: center e cursor: pointer. */
 form button {
     background: #309BB8;
     color: white;
