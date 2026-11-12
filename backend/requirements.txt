@@ -13,3 +13,7 @@ httpx2==2.16.0
 # Auth e segurança
 pwdlib==0.3.1
 argon2-cffi==25.1.0
+PyJWT==2.15.1
+
+# .env
+python-dotenv==1.2.4
