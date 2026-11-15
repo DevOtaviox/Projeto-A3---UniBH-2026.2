@@ -1,11 +1,13 @@
 import pytest
+from pydantic import ValidationError
+
 from app.models.estabelecimento import Estabelecimento
 from app.schemas.estabelecimento import (
     EstabelecimentoAtualizacao,
     EstabelecimentoCriacao,
+    EstabelecimentoPublicoResposta,
     EstabelecimentoResposta,
 )
-from pydantic import ValidationError
 
 
 def test_schema_estabelecimento_criacao_cpf():
@@ -281,3 +283,32 @@ def test_schema_estabelecimento_identificador_hifens_invalidos():
         dados["identificador"] = identificador
         with pytest.raises(ValidationError):
             EstabelecimentoCriacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_publico_resposta():
+    # Cria objeto de estabelecimento
+    estabelecimento = Estabelecimento(
+        id_estabelecimento=1,
+        nome="Barbearia João",
+        endereco="Rua das Flores, 100",
+        imagem=None,
+        tipo_documento="CPF",
+        documento="12345678901",
+        identificador="barbearia-joao",
+        ativo=True,
+        email="joao@example.com",
+        senha_hash="hash_da_senha",
+    )
+    # Cria objeto com o schema da resposta pública
+    resposta = EstabelecimentoPublicoResposta.model_validate(estabelecimento)
+    # Verifica os dados retornados
+    assert resposta.id_estabelecimento == 1
+    assert resposta.nome == "Barbearia João"
+    assert resposta.endereco == "Rua das Flores, 100"
+    assert resposta.imagem is None
+    assert resposta.identificador == "barbearia-joao"
+    # Verifica ausencia das informações privadas
+    assert "tipo_documento" not in resposta.model_dump()
+    assert "documento" not in resposta.model_dump()
+    assert "email" not in resposta.model_dump()
+    assert "senha_hash" not in resposta.model_dump()
+    assert "ativo" not in resposta.model_dump()

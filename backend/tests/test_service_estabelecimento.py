@@ -1,12 +1,15 @@
 import pytest
+from sqlalchemy.orm import sessionmaker
+
 from app.core.security import verificar_senha
 from app.models.estabelecimento import Estabelecimento
 from app.schemas.estabelecimento import EstabelecimentoCriacao
 from app.services.estabelecimento import (
     EstabelecimentoDuplicadoError,
+    EstabelecimentoNaoEncontradoError,
+    buscar_estabelecimento_publico,
     cadastrar_estabelecimento,
 )
-from sqlalchemy.orm import sessionmaker
 
 
 # Cria dados para cadastro
@@ -97,3 +100,50 @@ def test_cadastrar_estabelecimento_identificador_duplicado(sessao_teste):
     # Tenta cadastrar estabelecimento com identificador duplicado
     with pytest.raises(EstabelecimentoDuplicadoError):
         cadastrar_estabelecimento(dados_duplicados, sessao_teste)
+
+def test_buscar_estabelecimento_publico_ativo(sessao_teste):
+    # Cria estabelecimento e adiciona ao db
+    estabelecimento = Estabelecimento(
+        nome="Barbearia João",
+        endereco="Rua das Flores, 100",
+        tipo_documento="CPF",
+        documento="12345678901",
+        identificador="barbearia-joao",
+        ativo=True,
+        email="joao@example.com",
+        senha_hash="hash_da_senha",
+    )
+    sessao_teste.add(estabelecimento)
+    sessao_teste.commit()
+    sessao_teste.refresh(estabelecimento)
+    # Busca pelo identificador
+    resultado = buscar_estabelecimento_publico("barbearia-joao", sessao_teste)
+    # Resultado esperado e comparação
+    assert resultado.id_estabelecimento == estabelecimento.id_estabelecimento
+    assert resultado.identificador == "barbearia-joao"
+    assert resultado.ativo is True
+
+def test_buscar_estabelecimento_publico_inexistente(sessao_teste):
+    # Identificador que não existe no db
+    identificador = "inexistente"
+    # Tenta buscar o estabelecimento
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        buscar_estabelecimento_publico(identificador, sessao_teste)
+
+def test_buscar_estabelecimento_publico_inativo(sessao_teste):
+    # Cria um estabelecimento inativo
+    estabelecimento = Estabelecimento(
+        nome="Barbearia João",
+        endereco="Rua das Flores, 100",
+        tipo_documento="CPF",
+        documento="12345678901",
+        identificador="barbearia-joao",
+        ativo=False,
+        email="joao@example.com",
+        senha_hash="hash_da_senha",
+    )
+    sessao_teste.add(estabelecimento)
+    sessao_teste.commit()
+    # Tenta buscar o estabelecimento
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        buscar_estabelecimento_publico("barbearia-joao", sessao_teste)

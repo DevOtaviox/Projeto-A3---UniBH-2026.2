@@ -11,6 +11,10 @@ from app.schemas.estabelecimento import EstabelecimentoCriacao
 class EstabelecimentoDuplicadoError(Exception):
     pass
 
+# Exceção para estabelecimento não encontrado
+class EstabelecimentoNaoEncontradoError(Exception):
+    pass
+
 def cadastrar_estabelecimento(
     dados: EstabelecimentoCriacao,
     sessao: Session,
@@ -56,4 +60,23 @@ def cadastrar_estabelecimento(
         ) from erro
     # Atualiza os dados do objeto depois de criado no db, incluindo a pk
     sessao.refresh(estabelecimento)
+    return estabelecimento
+
+def buscar_estabelecimento_publico(
+    identificador: str,
+    sessao: Session,
+) -> Estabelecimento:
+    # Busca um estabelecimento pelo identificador e status ativo
+    # Faz com que estabelecimentos inativos não sejam retornados no endpoint público
+    consulta = select(Estabelecimento).where(
+        Estabelecimento.identificador == identificador,
+        Estabelecimento.ativo.is_(True),
+    )
+    estabelecimento = sessao.scalar(consulta)
+    # Lança erro se não for encontrado
+    if estabelecimento is None:
+        raise EstabelecimentoNaoEncontradoError(
+            "Estabelecimento não encontrado."
+        )
+    # Retorna o estabelecimento
     return estabelecimento
