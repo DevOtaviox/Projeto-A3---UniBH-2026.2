@@ -219,3 +219,65 @@ def test_schema_estabelecimento_resposta():
     assert resposta.email == "joao@example.com"
     # Verifica resposta sem hash da senha
     assert "senha_hash" not in resposta.model_dump()
+
+def test_schema_estabelecimento_identificador_valido():
+    # Cria dados com identificador com letras, números e hífen
+    dados = {
+        "nome": "Barbearia João",
+        "endereco": "Rua das Flores, 100",
+        "tipo_documento": "CPF",
+        "documento": "12345678901",
+        "identificador": "barbearia-joao-123",
+        "email": "joao@example.com",
+        "senha": "Senha123",
+    }
+    # Cria objeto usando o schema
+    estabelecimento = EstabelecimentoCriacao(**dados)  # pyright: ignore[reportArgumentType]
+    # Verifica o identificador
+    assert estabelecimento.identificador == "barbearia-joao-123"
+
+def test_schema_estabelecimento_identificador_caracteres_invalidos():
+    # Cria dados para estabelecimento
+    dados = {
+        "nome": "Barbearia João",
+        "endereco": "Rua das Flores, 100",
+        "tipo_documento": "CPF",
+        "documento": "12345678901",
+        "identificador": "barbearia-joao",
+        "email": "joao@example.com",
+        "senha": "Senha123",
+    }
+    # Tenta usar identificadores com caracteres inválidos
+    identificadores = [
+        "Barbearia",
+        "barbearia central",
+        "barbearia_central",
+        "barbearia@central",
+        "salão",
+    ]
+    for identificador in identificadores:
+        dados["identificador"] = identificador
+        with pytest.raises(ValidationError):
+            EstabelecimentoCriacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_identificador_hifens_invalidos():
+    # Cria dados para estabelecimento
+    dados = {
+        "nome": "Barbearia João",
+        "endereco": "Rua das Flores, 100",
+        "tipo_documento": "CPF",
+        "documento": "12345678901",
+        "identificador": "barbearia-joao",
+        "email": "joao@example.com",
+        "senha": "Senha123",
+    }
+    # Tenta usar identificadores com hífens em posições inválidas
+    identificadores = [
+        "-barbearia",
+        "barbearia-",
+        "barbearia--central",
+    ]
+    for identificador in identificadores:
+        dados["identificador"] = identificador
+        with pytest.raises(ValidationError):
+            EstabelecimentoCriacao(**dados)  # pyright: ignore[reportArgumentType]

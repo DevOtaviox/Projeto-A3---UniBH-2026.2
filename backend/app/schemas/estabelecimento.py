@@ -11,7 +11,14 @@ class EstabelecimentoCriacao(BaseModel):
     imagem: str | None = Field(default=None, max_length=500)
     tipo_documento: Literal["CPF", "CNPJ"]
     documento: str = Field(min_length=11, max_length=14)
-    identificador: str = Field(min_length=1, max_length=100)
+    # Valida identificador só com letras, números e hífen
+    # Não pode começar nem terminar com hífen
+    # Não pode ter vários hífens seguidos
+    identificador: str = Field(
+        min_length=1,
+        max_length=100,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    )
     email: EmailStr
     senha: str = Field(min_length=8, max_length=128)
     # Módulo do pydantic pra validar dados
