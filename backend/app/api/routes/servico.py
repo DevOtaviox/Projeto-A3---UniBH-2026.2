@@ -12,11 +12,13 @@ from app.schemas.servico import (
     ServicoCriacao,
     ServicoResposta,
 )
+from app.services.estabelecimento import EstabelecimentoNaoEncontradoError
 from app.services.servico import (
     ServicoNaoEncontradoError,
     atualizar_servico,
     cadastrar_servico,
     listar_servicos,
+    listar_servicos_publicos,
     obter_servico,
 )
 
@@ -25,6 +27,10 @@ from app.services.servico import (
 # O id_estabelecimento vem do token, não da requisição
 # Assim um estabelecimento só acessa os próprios serviços
 router = APIRouter(prefix="/servicos", tags=["Serviços"])
+
+# Endpoints de consulta pública dos serviços
+# Não exigem autenticação
+router_publico = APIRouter(tags=["Serviços"])
 
 # Cadastro de serviço
 @router.post(
@@ -111,3 +117,23 @@ def alterar_servico(
             detail=str(erro),
         ) from erro
     return servico
+
+# Consulta pública dos serviços de um estabelecimento
+@router_publico.get(
+    "/estabelecimentos/{identificador}/servicos",
+    response_model=list[ServicoResposta],
+)
+def consultar_servicos_publicos(
+    identificador: str,
+    sessao: Annotated[Session, Depends(obter_sessao_banco)],
+) -> list[Servico]:
+    # Usa o service de consulta pública
+    try:
+        servicos = listar_servicos_publicos(identificador, sessao)
+    # Responde como 404 se o estabelecimento não for encontrado
+    except EstabelecimentoNaoEncontradoError as erro:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(erro),
+        ) from erro
+    return servicos

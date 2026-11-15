@@ -361,3 +361,74 @@ def test_api_atualizar_servico_sem_autenticacao(cliente_teste):
     resposta = cliente_teste.patch("/servicos/1", json={"preco": "45.00"})
     # Resultado esperado e comparações
     assert resposta.status_code == 401
+
+def test_api_listar_servicos_publicos(cliente_teste, cabecalho):
+    # Cadastra dois serviços
+    cliente_teste.post(
+        "/servicos",
+        json=criar_dados_servico("Corte de cabelo"),
+        headers=cabecalho,
+    )
+    cadastro = cliente_teste.post(
+        "/servicos",
+        json=criar_dados_servico("Barba"),
+        headers=cabecalho,
+    )
+    # Inativa um dos serviços
+    id_servico = cadastro.json()["id_servico"]
+    cliente_teste.patch(
+        f"/servicos/{id_servico}",
+        json={"ativo": False},
+        headers=cabecalho,
+    )
+    # Consulta serviços públicos sem autenticação
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-joao/servicos")
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert [servico["nome"] for servico in resposta.json()] == [
+        "Corte de cabelo",
+    ]
+    assert resposta.json()[0]["ativo"] is True
+
+def test_api_listar_servicos_publicos_apenas_do_estabelecimento(
+    cliente_teste,
+    cabecalho,
+    cabecalho_outro,
+):
+    # Cadastra um serviço por estabelecimento
+    cliente_teste.post(
+        "/servicos",
+        json=criar_dados_servico("Corte de cabelo"),
+        headers=cabecalho,
+    )
+    cliente_teste.post(
+        "/servicos",
+        json=criar_dados_servico("Manicure"),
+        headers=cabecalho_outro,
+    )
+    # Consulta serviços públicos do primeiro estabelecimento
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-joao/servicos")
+    # Resultado esperado e comparações
+    # O serviço do outro estabelecimento não pode aparecer
+    assert resposta.status_code == 200
+    assert [servico["nome"] for servico in resposta.json()] == [
+        "Corte de cabelo",
+    ]
+
+def test_api_listar_servicos_publicos_sem_cadastro(cliente_teste, sessao_teste):
+    # Cria estabelecimento sem serviços
+    criar_estabelecimento(sessao_teste)
+    # Consulta os serviços
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-joao/servicos")
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert resposta.json() == []
+
+def test_api_listar_servicos_publicos_estabelecimento_inexistente(cliente_teste):
+    # Tenta consultar serviços de estabelecimento inexistente
+    resposta = cliente_teste.get(
+        "/estabelecimentos/inexistente/servicos"
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 404
+    assert resposta.json()["detail"] == "Estabelecimento não encontrado."
