@@ -1,6 +1,9 @@
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+
 from app.models.estabelecimento import Estabelecimento
 from app.models.servico import Servico
 from app.schemas.servico import ServicoAtualizacao, ServicoCriacao
@@ -11,8 +14,6 @@ from app.services.servico import (
     listar_servicos,
     obter_servico,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
 
 
 # Cria estabelecimento de teste

@@ -1,13 +1,14 @@
 from datetime import time
 
 import pytest
+from pydantic import ValidationError
+
 from app.models.horario_funcionamento import HorarioFuncionamento
 from app.schemas.horario_funcionamento import (
     HorarioFuncionamentoAtualizacao,
     HorarioFuncionamentoCriacao,
     HorarioFuncionamentoResposta,
 )
-from pydantic import ValidationError
 
 
 def test_schema_horario_funcionamento_criacao():

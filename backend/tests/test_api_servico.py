@@ -1,9 +1,10 @@
 import pytest
+from fastapi.testclient import TestClient
+
 from app.core.tokens import criar_token_acesso
 from app.db.session import obter_sessao_banco
 from app.main import app
 from app.models.estabelecimento import Estabelecimento
-from fastapi.testclient import TestClient
 
 
 # Cria estabelecimento pra teste
