@@ -117,3 +117,19 @@ def test_api_cadastrar_estabelecimento_dados_invalidos(cliente_teste):
     resposta = cliente_teste.post("/estabelecimentos", json=dados)
     # Resultado esperado e comparações
     assert resposta.status_code == 422
+
+def test_api_cadastrar_estabelecimento_identificador_invalido(cliente_teste):
+    # Cria dados com identificador inválido
+    dados = {
+        "nome": "Barbearia João",
+        "endereco": "Rua das Flores, 100",
+        "tipo_documento": "CPF",
+        "documento": "12345678901",
+        "identificador": "barbearia--joao",
+        "email": "joao@example.com",
+        "senha": "Senha123",
+    }
+    # Envia requisição de cadastro
+    resposta = cliente_teste.post("/estabelecimentos", json=dados)
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
