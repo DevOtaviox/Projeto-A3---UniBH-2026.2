@@ -1,0 +1,283 @@
+
+/* cores principais do agendaai */
+:root {
+    --azul-principal: #309BB8;
+    --azul-hover: #267f99;
+    --fundo: #f5f7f9;
+    --branco: #ffffff;
+    --texto: #263238;
+    --cinza: #77838b;
+    --borda: #dce3e7;
+}
+
+/* configuracoes gerais */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--texto);
+    background: var(--fundo);
+}
+
+/* estrutura principal */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* menu lateral */
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    background: var(--branco);
+    border-right: 1px solid var(--borda);
+}
+
+/* identidade do menu */
+.sidebar-brand {
+    padding: 32px 24px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.sidebar-brand h1 {
+    color: var(--azul-principal);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.sidebar-brand p {
+    margin-top: 5px;
+    color: var(--cinza);
+    font-size: 12px;
+}
+
+/* opcoes do menu */
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 25px 15px;
+}
+
+.menu-item {
+    padding: 13px 15px;
+    border-radius: 7px;
+    color: var(--texto);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.menu-item:hover {
+    background: #edf6f8;
+    color: var(--azul-hover);
+}
+
+.menu-item.active {
+    background: var(--azul-principal);
+    color: var(--branco);
+}
+
+/* rodape do menu */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 20px 15px;
+    border-top: 1px solid var(--borda);
+}
+
+.sidebar-footer button {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--borda);
+    border-radius: 7px;
+    background: var(--branco);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.sidebar-footer button:hover {
+    background: #fceeee;
+    border-color: #e5baba;
+    color: #c0392b;
+}
+
+/* conteudo principal */
+.main-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* cabecalho */
+.topbar {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 0 40px;
+    background: var(--branco);
+    border-bottom: 1px solid var(--borda);
+}
+
+.topbar h2 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.user-info {
+    color: var(--cinza);
+    font-size: 14px;
+}
+
+/* area das paginas */
+.page-content {
+    padding: 40px;
+}
+
+/* boas-vindas */
+.welcome-section {
+    margin-bottom: 40px;
+}
+
+.welcome-section h1 {
+    font-size: 28px;
+    font-weight: 650;
+    letter-spacing: -0.7px;
+}
+
+.welcome-section p {
+    margin-top: 10px;
+    color: var(--cinza);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* secao de acesso rapido */
+.dashboard-section h2 {
+    margin-bottom: 20px;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.quick-access {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.access-item {
+    padding: 25px;
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    transition: box-shadow 0.2s;
+}
+
+.access-item:hover {
+    box-shadow: 0 5px 18px rgba(31, 54, 65, 0.06);
+}
+
+.access-item h3 {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.access-item p {
+    margin: 12px 0 20px;
+    color: var(--cinza);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.access-item a {
+    color: var(--azul-hover);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.access-item a:hover {
+    text-decoration: underline;
+}
+
+/* responsividade */
+@media (max-width: 760px) {
+
+    .dashboard-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+    }
+
+    .sidebar-brand {
+        padding: 20px;
+    }
+
+    .sidebar-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 12px;
+    }
+
+    .sidebar-footer {
+        padding: 12px;
+    }
+
+    .sidebar-footer button {
+        max-width: 180px;
+    }
+
+    .topbar {
+        min-height: 65px;
+        padding: 15px 20px;
+        flex-wrap: wrap;
+    }
+
+    .page-content {
+        padding: 25px 20px;
+    }
+
+    .welcome-section h1 {
+        font-size: 24px;
+    }
+
+    .quick-access {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 400px) {
+
+    .sidebar-menu {
+        gap: 5px;
+    }
+
+    .menu-item {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .topbar h2 {
+        font-size: 17px;
+    }
+
+    .page-content {
+        padding: 20px 15px;
+    }
+}
