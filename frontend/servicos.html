@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgendaAi - Serviços</title>
+
+    <link rel="stylesheet" href="css/servicos.css">
+</head>
+
+<body>
+
+    <main class="dashboard-container">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <h1>AgendaAi</h1>
+                <p>Seu tempo, bem organizado</p>
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a href="inicio.html" class="menu-item">
+                    Início
+                </a>
+
+                <a href="servicos.html" class="menu-item active">
+                    Serviços
+                </a>
+
+                <a href="#" class="menu-item">
+                    Agendamentos
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-sair" type="button">
+                    Sair
+                </button>
+            </div>
+
+        </aside>
+
+        <section class="main-content">
+
+            <header class="topbar">
+                <h2>Gerenciamento de serviços</h2>
+
+                <div class="user-info">
+                    <span>Meu estabelecimento</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+
+                <div class="page-header">
+
+                    <div>
+                        <h1>Meus serviços</h1>
+                        <p>Cadastre e gerencie os serviços do seu estabelecimento.</p>
+                    </div>
+
+                    <button id="btn-novo-servico" type="button">
+                        + Novo serviço
+                    </button>
+
+                </div>
+
+                <section class="services-section">
+
+                    <div class="table-container">
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Preço</th>
+                                    <th>Duração</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="lista-servicos">
+                                <tr>
+                                    <td colspan="5">
+                                        Carregando serviços...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- formulario de cadastro de servico -->
+    <div id="modal-servico" class="modal-overlay">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2>Novo serviço</h2>
+
+                <button id="btn-fechar-modal" type="button">
+                    &times;
+                </button>
+            </div>
+
+            <form id="form-servico">
+
+                <div class="input-group">
+                    <label for="nome-servico">Nome do serviço</label>
+
+                    <input
+                        type="text"
+                        id="nome-servico"
+                        maxlength="150"
+                        placeholder="Ex.: Corte masculino"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label for="descricao-servico">Descrição</label>
+
+                    <textarea
+                        id="descricao-servico"
+                        maxlength="500"
+                        placeholder="Descreva o serviço (opcional)"
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="preco-servico">Preço (R$)</label>
+
+                        <input
+                            type="number"
+                            id="preco-servico"
+                            min="0"
+                            step="0.01"
+                            placeholder="45.00"
+                            required
+                        >
+                    </div>
+
+                    <div class="input-group">
+                        <label for="duracao-servico">Duração (minutos)</label>
+
+                        <input
+                            type="number"
+                            id="duracao-servico"
+                            min="1"
+                            step="1"
+                            placeholder="40"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <p id="mensagem-servico"></p>
+
+                <div class="modal-actions">
+
+                    <button id="btn-cancelar" type="button">
+                        Cancelar
+                    </button>
+
+                    <button type="submit">
+                        Salvar serviço
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/servicos.js"></script>
+
+</body>
+
+</html>
