@@ -3,10 +3,14 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import verificar_senha
 from app.models.estabelecimento import Estabelecimento
-from app.schemas.estabelecimento import EstabelecimentoCriacao
+from app.schemas.estabelecimento import (
+    EstabelecimentoAtualizacao,
+    EstabelecimentoCriacao,
+)
 from app.services.estabelecimento import (
     EstabelecimentoDuplicadoError,
     EstabelecimentoNaoEncontradoError,
+    atualizar_estabelecimento,
     buscar_estabelecimento_publico,
     cadastrar_estabelecimento,
 )
@@ -147,3 +151,83 @@ def test_buscar_estabelecimento_publico_inativo(sessao_teste):
     # Tenta buscar o estabelecimento
     with pytest.raises(EstabelecimentoNaoEncontradoError):
         buscar_estabelecimento_publico("barbearia-joao", sessao_teste)
+
+def test_atualizar_estabelecimento(sessao_teste):
+    # Cria e cadastra estabelecimento
+    dados = criar_dados_estabelecimento()
+    estabelecimento = cadastrar_estabelecimento(dados, sessao_teste)
+    # Cria dados para atualização parcial
+    dados_atualizacao = EstabelecimentoAtualizacao(nome="Barbearia Central")
+    # Atualiza o estabelecimento usando o Service
+    atualizar_estabelecimento(
+        dados_atualizacao,
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    # Cria um gerador de sessões para consulta
+    gerador_sessoes = sessionmaker(bind=sessao_teste.get_bind())
+    with gerador_sessoes() as sessao_consulta:
+        estabelecimento_salvo = sessao_consulta.get(
+            Estabelecimento,
+            estabelecimento.id_estabelecimento,
+        )
+    # Resultado esperado e comparações
+    assert estabelecimento_salvo is not None
+    assert estabelecimento_salvo.nome == "Barbearia Central"
+    assert estabelecimento_salvo.endereco == "Rua das Flores, 100"
+    assert estabelecimento_salvo.documento == "12345678901"
+    assert estabelecimento_salvo.identificador == "barbearia-joao"
+    assert estabelecimento_salvo.email == "joao@example.com"
+
+def test_atualizar_estabelecimento_documento_duplicado(sessao_teste):
+    # Cria e cadastra dois estabelecimentos
+    dados = criar_dados_estabelecimento()
+    estabelecimento = cadastrar_estabelecimento(dados, sessao_teste)
+    dados_outro = criar_dados_estabelecimento(
+        email="maria@example.com",
+        documento="98765432100",
+        identificador="manicure-maria",
+    )
+    cadastrar_estabelecimento(dados_outro, sessao_teste)
+    # Cria dados com documento já cadastrado
+    dados_atualizacao = EstabelecimentoAtualizacao(
+        tipo_documento="CPF",
+        documento="98765432100",
+    )
+    # Tenta atualizar com documento duplicado
+    with pytest.raises(EstabelecimentoDuplicadoError):
+        atualizar_estabelecimento(
+            dados_atualizacao,
+            estabelecimento.id_estabelecimento,
+            sessao_teste,
+        )
+
+def test_atualizar_estabelecimento_mesmo_documento(sessao_teste):
+    # Cria e cadastra estabelecimento
+    dados = criar_dados_estabelecimento()
+    estabelecimento = cadastrar_estabelecimento(dados, sessao_teste)
+    # Cria dados mantendo o mesmo documento
+    dados_atualizacao = EstabelecimentoAtualizacao(
+        tipo_documento="CPF",
+        documento="12345678901",
+    )
+    # Atualiza o estabelecimento usando o Service
+    resultado = atualizar_estabelecimento(
+        dados_atualizacao,
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    # Resultado esperado e comparações
+    assert resultado.documento == "12345678901"
+    assert resultado.tipo_documento == "CPF"
+
+def test_atualizar_estabelecimento_inexistente(sessao_teste):
+    # Cria dados para atualização
+    dados = EstabelecimentoAtualizacao(nome="Barbearia Teste")
+    # Tenta atualizar um estabelecimento inexistente
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        atualizar_estabelecimento(
+            dados,
+            999,
+            sessao_teste,
+        )

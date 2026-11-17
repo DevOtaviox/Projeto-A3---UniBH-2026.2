@@ -3,9 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import obter_estabelecimento_atual
 from app.db.session import obter_sessao_banco
 from app.models.estabelecimento import Estabelecimento
 from app.schemas.estabelecimento import (
+    EstabelecimentoAtualizacao,
     EstabelecimentoCriacao,
     EstabelecimentoPublicoResposta,
     EstabelecimentoResposta,
@@ -13,6 +15,7 @@ from app.schemas.estabelecimento import (
 from app.services.estabelecimento import (
     EstabelecimentoDuplicadoError,
     EstabelecimentoNaoEncontradoError,
+    atualizar_estabelecimento,
     buscar_estabelecimento_publico,
     cadastrar_estabelecimento,
 )
@@ -58,3 +61,37 @@ def consultar_estabelecimento_publico(
             detail=str(erro),
         ) from erro
     return estabelecimento
+
+# Atualização dos dados do estabelecimento autenticado
+@router.patch(
+    "/estabelecimentos/me",
+    response_model=EstabelecimentoResposta,
+)
+def alterar_estabelecimento(
+    dados: EstabelecimentoAtualizacao,
+    estabelecimento: Annotated[
+        Estabelecimento,
+        Depends(obter_estabelecimento_atual),
+    ],
+    sessao: Annotated[Session, Depends(obter_sessao_banco)],
+) -> Estabelecimento:
+    # Usa o service de atualização com o id do estabelecimento autenticado
+    try:
+        estabelecimento_atualizado = atualizar_estabelecimento(
+            dados,
+            estabelecimento.id_estabelecimento,
+            sessao,
+        )
+    # Responde como 404 se o estabelecimento não for encontrado
+    except EstabelecimentoNaoEncontradoError as erro:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(erro),
+        ) from erro
+    # Responde como 409 se o documento já estiver cadastrado
+    except EstabelecimentoDuplicadoError as erro:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(erro),
+        ) from erro
+    return estabelecimento_atualizado

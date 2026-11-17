@@ -312,3 +312,51 @@ def test_schema_estabelecimento_publico_resposta():
     assert "email" not in resposta.model_dump()
     assert "senha_hash" not in resposta.model_dump()
     assert "ativo" not in resposta.model_dump()
+
+def test_schema_estabelecimento_atualizacao_email_nao_permitido():
+    # Cria dados para atualização do e-mail
+    dados = {
+        "email": "novo@example.com",
+    }
+    # Tenta criar objeto usando o schema
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_atualizacao_senha_nao_permitida():
+    # Cria dados para atualização da senha
+    dados = {
+        "senha": "NovaSenha123",
+    }
+    # Tenta criar objeto usando o schema
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_atualizacao_identificador_nao_permitido():
+    # Cria dados para atualização do identificador
+    dados = {
+        "identificador": "nova-barbearia",
+    }
+    # Tenta criar objeto usando o schema
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_atualizacao_nome():
+    # Cria dados para atualização do nome
+    dados = {
+        "nome": "Barbearia Central",
+    }
+    # Cria objeto usando o schema
+    estabelecimento = EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
+    # Resultado esperado e comparações
+    assert estabelecimento.model_dump(exclude_unset=True) == {
+        "nome": "Barbearia Central",
+    }
+
+def test_schema_estabelecimento_atualizacao_ativo_nao_permitido():
+    # Cria dados para atualização do status
+    dados = {
+        "ativo": False,
+    }
+    # Tenta criar objeto usando o schema
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
