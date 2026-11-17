@@ -1,9 +1,10 @@
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
+
 from app.models.servico import Servico
 from app.schemas.servico import ServicoAtualizacao, ServicoCriacao, ServicoResposta
-from pydantic import ValidationError
 
 
 def test_schema_servico_criacao():

@@ -1,18 +1,21 @@
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+
 from app.models.estabelecimento import Estabelecimento
 from app.models.servico import Servico
 from app.schemas.servico import ServicoAtualizacao, ServicoCriacao
+from app.services.estabelecimento import EstabelecimentoNaoEncontradoError
 from app.services.servico import (
     ServicoNaoEncontradoError,
     atualizar_servico,
     cadastrar_servico,
     listar_servicos,
+    listar_servicos_publicos,
     obter_servico,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
 
 
 # Cria estabelecimento de teste
@@ -21,6 +24,7 @@ def criar_estabelecimento(
     email="joao@example.com",
     documento="12345678901",
     identificador="barbearia-joao",
+    ativo=True,
 ):
     estabelecimento = Estabelecimento(
         nome="Barbearia João",
@@ -30,6 +34,7 @@ def criar_estabelecimento(
         identificador=identificador,
         email=email,
         senha_hash="hash-teste",
+        ativo=ativo
     )
     # Adiciona e salva no db
     sessao_teste.add(estabelecimento)
@@ -295,3 +300,67 @@ def test_atualizar_servico_de_outro_estabelecimento(sessao_teste):
     # Verifica que o serviço não foi alterado
     sessao_teste.refresh(servico)
     assert servico.preco == Decimal("35.00")
+
+def test_listar_servicos_publicos(sessao_teste):
+    # Cria dois estabelecimentos
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    outro_estabelecimento = criar_outro_estabelecimento(sessao_teste)
+    # Cadastra serviços para os estabelecimentos
+    cadastrar_servico(
+        criar_dados_servico("Corte de cabelo"),
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    servico_inativo = cadastrar_servico(
+        criar_dados_servico("Barba"),
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    cadastrar_servico(
+        criar_dados_servico("Manicure"),
+        outro_estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    # Inativa o serviço barba
+    dados = ServicoAtualizacao(ativo=False)
+    atualizar_servico(
+        servico_inativo.id_servico,
+        dados,
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    # Consulta os serviços públicos do primeiro estabelecimento
+    servicos = listar_servicos_publicos(
+        estabelecimento.identificador,
+        sessao_teste,
+    )
+    # Resultado esperado e comparações
+    assert [servico.nome for servico in servicos] == ["Corte de cabelo"]
+
+def test_listar_servicos_publicos_sem_cadastro(sessao_teste):
+    # Cria estabelecimento sem serviços
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    # Consulta os serviços públicos
+    servicos = listar_servicos_publicos(
+        estabelecimento.identificador,
+        sessao_teste,
+    )
+    # Resultado esperado e comparações
+    assert servicos == []
+
+def test_listar_servicos_publicos_estabelecimento_inexistente(sessao_teste):
+    # Define identificador inexistente
+    identificador = "inexistente"
+    # Tenta consultar os serviços públicos
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        listar_servicos_publicos(identificador, sessao_teste)
+
+def test_listar_servicos_publicos_estabelecimento_inativo(sessao_teste):
+    # Cria estabelecimento inativo
+    estabelecimento = criar_estabelecimento(sessao_teste, ativo=False)
+    # Tenta consultar os serviços públicos
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        listar_servicos_publicos(
+            estabelecimento.identificador,
+            sessao_teste,
+        )

@@ -1,4 +1,5 @@
 import pytest
+
 from app.core.security import gerar_hash_senha
 from app.core.tokens import validar_token_acesso
 from app.models.estabelecimento import Estabelecimento

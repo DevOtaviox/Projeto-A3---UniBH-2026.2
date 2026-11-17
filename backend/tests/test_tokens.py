@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+
 from app.core.config import (
     ALGORITMO_JWT,
     SECRET_KEY,

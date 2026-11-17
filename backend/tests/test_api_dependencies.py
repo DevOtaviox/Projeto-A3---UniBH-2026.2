@@ -2,12 +2,13 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
+
 from app.api.dependencies import obter_estabelecimento_atual
 from app.core.config import ALGORITMO_JWT, SECRET_KEY
 from app.core.tokens import criar_token_acesso
 from app.models.estabelecimento import Estabelecimento
-from fastapi import HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 
 
 # Cria estabelecimento de teste

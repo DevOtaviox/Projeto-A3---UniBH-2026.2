@@ -1,6 +1,8 @@
 from datetime import date, datetime, time, timedelta
 
 import pytest
+from pydantic import ValidationError
+
 from app.models.agendamento import Agendamento
 from app.schemas.agendamento import (
     LIMITE_DIAS_AGENDAMENTO,
@@ -8,7 +10,6 @@ from app.schemas.agendamento import (
     AgendamentoCriacao,
     AgendamentoResposta,
 )
-from pydantic import ValidationError
 
 
 # Cria dados válidos para criação do agendamento

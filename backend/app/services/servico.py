@@ -3,14 +3,15 @@ from sqlalchemy.orm import Session
 
 from app.models.servico import Servico
 from app.schemas.servico import ServicoAtualizacao, ServicoCriacao
+from app.services.estabelecimento import buscar_estabelecimento_publico
 
 
 # Exceção para serviço que não existe ou pertence a outro estabelecimento
 class ServicoNaoEncontradoError(Exception):
     pass
 
-# Todas as funções recebem o id_estabelecimento
-# Assim um estabelecimento só consegue acessar os próprios serviços
+# As funções de gerenciamento utilizam o id_estabelecimento
+# para limitar o acesso aos serviços do proprietário autenticado
 
 def cadastrar_servico(
     dados: ServicoCriacao,
@@ -79,3 +80,21 @@ def atualizar_servico(
     sessao.commit()
     sessao.refresh(servico)
     return servico
+
+def listar_servicos_publicos(
+    identificador: str,
+    sessao: Session,
+) -> list[Servico]:
+    # Busca o estabelecimento pelo identificador
+    estabelecimento = buscar_estabelecimento_publico(identificador, sessao)
+    # Consulta somente os serviços ativos do estabelecimento
+    consulta = (
+        select(Servico)
+        .where(
+            Servico.id_estabelecimento == estabelecimento.id_estabelecimento,
+            Servico.ativo.is_(True),
+        )
+        .order_by(Servico.id_servico)
+    )
+    # Retorna os serviços
+    return list(sessao.scalars(consulta).all())

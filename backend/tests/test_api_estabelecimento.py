@@ -1,7 +1,9 @@
 import pytest
+from fastapi.testclient import TestClient
+
 from app.db.session import obter_sessao_banco
 from app.main import app
-from fastapi.testclient import TestClient
+from app.models.estabelecimento import Estabelecimento
 
 
 # Cria dados para cadastro
@@ -133,3 +135,50 @@ def test_api_cadastrar_estabelecimento_identificador_invalido(cliente_teste):
     resposta = cliente_teste.post("/estabelecimentos", json=dados)
     # Resultado esperado e comparações
     assert resposta.status_code == 422
+
+def test_api_consultar_estabelecimento_publico(cliente_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Consulta o estabelecimento pelo identificador
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-joao")
+    # Converte resposta para dicionário
+    estabelecimento = resposta.json()
+    # Resultado esperado e comparações
+    assert cadastro.status_code == 201
+    assert resposta.status_code == 200
+    assert estabelecimento["id_estabelecimento"] == cadastro.json()["id_estabelecimento"]
+    assert estabelecimento["nome"] == "Barbearia João"
+    assert estabelecimento["endereco"] == "Rua das Flores, 100"
+    assert estabelecimento["imagem"] is None
+    assert estabelecimento["identificador"] == "barbearia-joao"
+    # Verifica ausência de informações privadas
+    assert "tipo_documento" not in estabelecimento
+    assert "documento" not in estabelecimento
+    assert "email" not in estabelecimento
+    assert "senha_hash" not in estabelecimento
+    assert "ativo" not in estabelecimento
+
+def test_api_consultar_estabelecimento_publico_inexistente(cliente_teste):
+    # Consulta um estabelecimento inexistente
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-inexistente")
+    # Resultado esperado e comparações
+    assert resposta.status_code == 404
+    assert resposta.json()["detail"] == "Estabelecimento não encontrado."
+
+def test_api_consultar_estabelecimento_publico_inativo(cliente_teste, sessao_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Busca o estabelecimento no db e desativa
+    id_estabelecimento = cadastro.json()["id_estabelecimento"]
+    estabelecimento = sessao_teste.get(Estabelecimento, id_estabelecimento)
+    assert estabelecimento is not None
+    estabelecimento.ativo = False
+    sessao_teste.commit()
+    # Tenta consultar
+    resposta = cliente_teste.get("/estabelecimentos/barbearia-joao")
+    # Resultado esperado e comparações
+    assert cadastro.status_code == 201
+    assert resposta.status_code == 404
+    assert resposta.json()["detail"] == "Estabelecimento não encontrado."

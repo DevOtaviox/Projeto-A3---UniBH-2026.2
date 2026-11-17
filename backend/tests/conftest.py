@@ -1,8 +1,9 @@
-import app.models  # noqa: F401
 import pytest
+from sqlalchemy.orm import sessionmaker
+
+import app.models  # noqa: F401
 from app.db import session
 from app.db.base import BaseModelos
-from sqlalchemy.orm import sessionmaker
 
 
 # Fixture com o gerador de sessões

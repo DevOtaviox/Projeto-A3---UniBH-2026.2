@@ -99,3 +99,12 @@ class EstabelecimentoResposta(BaseModel):
     email: EmailStr
     # Converte um objeto do SQLAlchemy em um dicionário
     model_config = ConfigDict(from_attributes=True)
+
+# Schema para consulta publica
+class EstabelecimentoPublicoResposta(BaseModel):
+    id_estabelecimento: int
+    nome: str
+    endereco: str
+    imagem: str | None
+    identificador: str
+    model_config = ConfigDict(from_attributes=True)
