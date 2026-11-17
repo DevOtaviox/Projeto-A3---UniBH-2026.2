@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.tokens import criar_token_acesso
 from app.db.session import obter_sessao_banco
 from app.main import app
 from app.models.estabelecimento import Estabelecimento
@@ -182,3 +183,124 @@ def test_api_consultar_estabelecimento_publico_inativo(cliente_teste, sessao_tes
     assert cadastro.status_code == 201
     assert resposta.status_code == 404
     assert resposta.json()["detail"] == "Estabelecimento não encontrado."
+
+# Cria cabeçalho de autenticação para o estabelecimento
+def criar_cabecalho(id_estabelecimento):
+    token = criar_token_acesso(id_estabelecimento)
+    return {"Authorization": f"Bearer {token}"}
+
+def test_api_atualizar_estabelecimento(cliente_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria dados para atualização e cabeçalho de autenticação
+    dados_atualizacao = {
+        "nome": "Barbearia Teste",
+        "endereco": "Avenida Teste, 200",
+    }
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Atualiza o estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json=dados_atualizacao,
+        headers=cabecalho,
+    )
+    # Converte resposta para dicionário
+    estabelecimento = resposta.json()
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert estabelecimento["nome"] == "Barbearia Teste"
+    assert estabelecimento["endereco"] == "Avenida Teste, 200"
+    assert estabelecimento["documento"] == "12345678901"
+    assert estabelecimento["identificador"] == "barbearia-joao"
+    assert estabelecimento["email"] == "joao@example.com"
+
+def test_api_atualizar_estabelecimento_sem_autenticacao(cliente_teste):
+    # Cria dados para atualização
+    dados = {
+        "nome": "Barbearia Teste",
+    }
+    # Tenta atualizar sem token
+    resposta = cliente_teste.patch("/estabelecimentos/me", json=dados)
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401
+
+def test_api_atualizar_estabelecimento_documento_duplicado(cliente_teste):
+    # Cadastra dois estabelecimentos
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    dados_outro = criar_dados_estabelecimento(
+        email="maria@example.com",
+        documento="98765432100",
+        identificador="manicure-maria",
+    )
+    cliente_teste.post("/estabelecimentos", json=dados_outro)
+    # Cria dados com documento já cadastrado
+    dados_atualizacao = {
+        "tipo_documento": "CPF",
+        "documento": "98765432100",
+    }
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Tenta atualizar o estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json=dados_atualizacao,
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 409
+    assert resposta.json()["detail"] == "Documento já cadastrado."
+
+def test_api_atualizar_estabelecimento_dados_invalidos(cliente_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria dados com nome vazio
+    dados_atualizacao = {
+        "nome": "",
+    }
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Tenta atualizar o estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json=dados_atualizacao,
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
+
+def test_api_atualizar_estabelecimento_email_nao_permitido(cliente_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria dados tentando alterar o e-mail
+    dados_atualizacao = {
+        "email": "novo@example.com",
+    }
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Tenta atualizar o estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json=dados_atualizacao,
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
+
+def test_api_atualizar_estabelecimento_ativo_nao_permitido(cliente_teste):
+    # Cadastra um estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria dados tentando inativar o estabelecimento
+    dados_atualizacao = {
+        "ativo": False,
+    }
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Tenta atualizar o estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json=dados_atualizacao,
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
