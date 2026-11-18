@@ -1,7 +1,30 @@
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
+
+# Formato do identificador: só letras minúsculas, números e hífen
+# Não pode começar nem terminar com hífen
+# Não pode ter vários hífens seguidos
+PADRAO_IDENTIFICADOR = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
+
+# Identificadores reservados para rotas da API
+# Ex.: /estabelecimentos/me é a rota do estabelecimento autenticado
+IDENTIFICADORES_RESERVADOS = {"me"}
+
+
+# Valida se o identificador não é uma palavra reservada
+def validar_identificador_reservado(identificador: str | None) -> str | None:
+    if identificador in IDENTIFICADORES_RESERVADOS:
+        raise ValueError("Este identificador é reservado. Escolha outro.")
+    return identificador
 
 
 # Cadastro de estabelecimento
@@ -12,15 +35,19 @@ class EstabelecimentoCriacao(BaseModel):
     tipo_documento: Literal["CPF", "CNPJ"]
     documento: str = Field(min_length=11, max_length=14)
     # Valida identificador só com letras, números e hífen
-    # Não pode começar nem terminar com hífen
-    # Não pode ter vários hífens seguidos
     identificador: str = Field(
         min_length=1,
         max_length=100,
-        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        pattern=PADRAO_IDENTIFICADOR,
     )
     email: EmailStr
     senha: str = Field(min_length=8, max_length=128)
+    # Módulo do pydantic pra validar um campo específico
+    @field_validator("identificador")
+    @classmethod
+    def validar_identificador(cls, identificador: str) -> str:
+        return validar_identificador_reservado(identificador)
+
     # Módulo do pydantic pra validar dados
     @model_validator(mode="after")
     def validar_documento(self):
@@ -42,10 +69,22 @@ class EstabelecimentoAtualizacao(BaseModel):
     imagem: str | None = Field(default=None, max_length=500)
     tipo_documento: Literal["CPF", "CNPJ"] | None = None
     documento: str | None = Field(default=None, min_length=11, max_length=14)
-    identificador: str | None = Field(default=None, min_length=1, max_length=100)
+    # Mesmo formato do cadastro
+    identificador: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+        pattern=PADRAO_IDENTIFICADOR,
+    )
     email: EmailStr | None = None
     senha: str | None = Field(default=None, min_length=8, max_length=128)
     ativo: bool | None = None
+    # Módulo do pydantic pra validar um campo específico
+    @field_validator("identificador")
+    @classmethod
+    def validar_identificador(cls, identificador: str | None) -> str | None:
+        return validar_identificador_reservado(identificador)
+
     # Módulo do pydantic pra validar dados
     @model_validator(mode="after")
     def validar_atualizacao(self):

@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.tokens import criar_token_acesso
 from app.db.session import obter_sessao_banco
 from app.main import app
 from app.models.estabelecimento import Estabelecimento
@@ -182,3 +183,135 @@ def test_api_consultar_estabelecimento_publico_inativo(cliente_teste, sessao_tes
     assert cadastro.status_code == 201
     assert resposta.status_code == 404
     assert resposta.json()["detail"] == "Estabelecimento não encontrado."
+
+# Cadastra estabelecimento pela API e retorna o cabeçalho de autenticação
+def cadastrar_e_autenticar(cliente_teste, **kwargs):
+    cadastro = cliente_teste.post(
+        "/estabelecimentos",
+        json=criar_dados_estabelecimento(**kwargs),
+    )
+    token = criar_token_acesso(cadastro.json()["id_estabelecimento"])
+    return {"Authorization": f"Bearer {token}"}
+
+def test_api_consultar_meu_estabelecimento(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Consulta os próprios dados
+    resposta = cliente_teste.get("/estabelecimentos/me", headers=cabecalho)
+    # Resultado esperado e comparações
+    # Rota privada retorna os dados completos, sem a senha
+    assert resposta.status_code == 200
+    assert resposta.json()["identificador"] == "barbearia-joao"
+    assert resposta.json()["email"] == "joao@example.com"
+    assert "senha_hash" not in resposta.json()
+
+def test_api_consultar_meu_estabelecimento_sem_autenticacao(cliente_teste):
+    # Tenta consultar sem token
+    resposta = cliente_teste.get("/estabelecimentos/me")
+    # Resultado esperado e comparações
+    # Não pode ser tratado como identificador público "me"
+    assert resposta.status_code == 401
+
+def test_api_atualizar_estabelecimento(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Atualiza apenas o endereço
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"endereco": "Avenida Central, 200"},
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert resposta.json()["endereco"] == "Avenida Central, 200"
+    assert resposta.json()["nome"] == "Barbearia João"
+
+def test_api_atualizar_estabelecimento_senha_permite_login(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Atualiza a senha
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"senha": "NovaSenha456"},
+        headers=cabecalho,
+    )
+    # Faz login com a senha nova e com a antiga
+    login_novo = cliente_teste.post(
+        "/auth/login",
+        json={"email": "joao@example.com", "senha": "NovaSenha456"},
+    )
+    login_antigo = cliente_teste.post(
+        "/auth/login",
+        json={"email": "joao@example.com", "senha": "Senha123"},
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert "senha" not in resposta.json()
+    assert login_novo.status_code == 200
+    assert login_antigo.status_code == 401
+
+def test_api_atualizar_estabelecimento_identificador_publico(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Troca o identificador
+    cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"identificador": "barbearia-do-joao"},
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    # A página pública passa a responder no identificador novo
+    assert cliente_teste.get("/estabelecimentos/barbearia-do-joao").status_code == 200
+    assert cliente_teste.get("/estabelecimentos/barbearia-joao").status_code == 404
+
+def test_api_atualizar_estabelecimento_duplicado(cliente_teste):
+    # Cadastra dois estabelecimentos
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    cadastrar_e_autenticar(
+        cliente_teste,
+        email="maria@example.com",
+        documento="98765432100",
+        identificador="manicure-maria",
+    )
+    # Tenta usar o e-mail do outro estabelecimento
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"email": "maria@example.com"},
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 409
+    assert resposta.json()["detail"] == "E-mail já cadastrado."
+
+def test_api_atualizar_estabelecimento_dados_invalidos(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Tenta enviar documento sem o tipo
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"documento": "98765432100"},
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
+
+def test_api_atualizar_estabelecimento_sem_campos(cliente_teste):
+    # Cadastra e autentica
+    cabecalho = cadastrar_e_autenticar(cliente_teste)
+    # Tenta atualizar sem informar campos
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={},
+        headers=cabecalho,
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 422
+
+def test_api_atualizar_estabelecimento_sem_autenticacao(cliente_teste):
+    # Tenta atualizar sem token
+    resposta = cliente_teste.patch(
+        "/estabelecimentos/me",
+        json={"nome": "Outro nome"},
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401

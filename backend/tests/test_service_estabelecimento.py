@@ -3,10 +3,14 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import verificar_senha
 from app.models.estabelecimento import Estabelecimento
-from app.schemas.estabelecimento import EstabelecimentoCriacao
+from app.schemas.estabelecimento import (
+    EstabelecimentoAtualizacao,
+    EstabelecimentoCriacao,
+)
 from app.services.estabelecimento import (
     EstabelecimentoDuplicadoError,
     EstabelecimentoNaoEncontradoError,
+    atualizar_estabelecimento,
     buscar_estabelecimento_publico,
     cadastrar_estabelecimento,
 )
@@ -147,3 +151,123 @@ def test_buscar_estabelecimento_publico_inativo(sessao_teste):
     # Tenta buscar o estabelecimento
     with pytest.raises(EstabelecimentoNaoEncontradoError):
         buscar_estabelecimento_publico("barbearia-joao", sessao_teste)
+
+# Cadastra dois estabelecimentos pra testar duplicidade na atualização
+def cadastrar_dois_estabelecimentos(sessao_teste):
+    estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(),
+        sessao_teste,
+    )
+    outro_estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(
+            email="maria@example.com",
+            documento="98765432100",
+            identificador="manicure-maria",
+        ),
+        sessao_teste,
+    )
+    return estabelecimento, outro_estabelecimento
+
+def test_atualizar_estabelecimento(sessao_teste):
+    # Cadastra estabelecimento
+    estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(),
+        sessao_teste,
+    )
+    # Atualiza apenas nome e endereço
+    dados = EstabelecimentoAtualizacao(  # pyright: ignore[reportCallIssue]
+        nome="Barbearia do João",
+        endereco="Avenida Central, 200",
+    )
+    atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+    # Cria um gerador de sessões para consulta
+    gerador_sessoes = sessionmaker(bind=sessao_teste.get_bind())
+    with gerador_sessoes() as sessao_consulta:
+        estabelecimento_salvo = sessao_consulta.get(
+            Estabelecimento,
+            estabelecimento.id_estabelecimento,
+        )
+    # Resultado esperado e comparações
+    # Os campos não informados permanecem iguais
+    assert estabelecimento_salvo is not None
+    assert estabelecimento_salvo.nome == "Barbearia do João"
+    assert estabelecimento_salvo.endereco == "Avenida Central, 200"
+    assert estabelecimento_salvo.email == "joao@example.com"
+    assert estabelecimento_salvo.identificador == "barbearia-joao"
+
+def test_atualizar_estabelecimento_senha(sessao_teste):
+    # Cadastra estabelecimento
+    estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(),
+        sessao_teste,
+    )
+    # Atualiza a senha
+    dados = EstabelecimentoAtualizacao(senha="NovaSenha456")  # pyright: ignore[reportCallIssue]
+    resultado = atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+    # Resultado esperado e comparações
+    # A senha é salva como hash, nunca em texto
+    assert resultado.senha_hash != "NovaSenha456"
+    assert verificar_senha("NovaSenha456", resultado.senha_hash)
+    assert not verificar_senha("Senha123", resultado.senha_hash)
+
+def test_atualizar_estabelecimento_documento(sessao_teste):
+    # Cadastra estabelecimento com CPF
+    estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(),
+        sessao_teste,
+    )
+    # Troca para CNPJ
+    dados = EstabelecimentoAtualizacao(  # pyright: ignore[reportCallIssue]
+        tipo_documento="CNPJ",
+        documento="12345678000195",
+    )
+    resultado = atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+    # Resultado esperado e comparações
+    assert resultado.tipo_documento == "CNPJ"
+    assert resultado.documento == "12345678000195"
+
+def test_atualizar_estabelecimento_mesmos_valores(sessao_teste):
+    # Cadastra estabelecimento
+    estabelecimento = cadastrar_estabelecimento(
+        criar_dados_estabelecimento(),
+        sessao_teste,
+    )
+    # Envia os próprios valores únicos atuais
+    dados = EstabelecimentoAtualizacao(  # pyright: ignore[reportCallIssue]
+        email="joao@example.com",
+        identificador="barbearia-joao",
+    )
+    resultado = atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+    # Resultado esperado e comparações
+    # Não pode acusar duplicidade com o próprio estabelecimento
+    assert resultado.email == "joao@example.com"
+
+def test_atualizar_estabelecimento_email_duplicado(sessao_teste):
+    # Cadastra dois estabelecimentos
+    estabelecimento, _ = cadastrar_dois_estabelecimentos(sessao_teste)
+    # Tenta usar o e-mail do outro estabelecimento
+    dados = EstabelecimentoAtualizacao(email="maria@example.com")  # pyright: ignore[reportCallIssue]
+    with pytest.raises(EstabelecimentoDuplicadoError, match="E-mail"):
+        atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+
+def test_atualizar_estabelecimento_documento_duplicado(sessao_teste):
+    # Cadastra dois estabelecimentos
+    estabelecimento, _ = cadastrar_dois_estabelecimentos(sessao_teste)
+    # Tenta usar o documento do outro estabelecimento
+    dados = EstabelecimentoAtualizacao(  # pyright: ignore[reportCallIssue]
+        tipo_documento="CPF",
+        documento="98765432100",
+    )
+    with pytest.raises(EstabelecimentoDuplicadoError, match="Documento"):
+        atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+
+def test_atualizar_estabelecimento_identificador_duplicado(sessao_teste):
+    # Cadastra dois estabelecimentos
+    estabelecimento, _ = cadastrar_dois_estabelecimentos(sessao_teste)
+    # Tenta usar o identificador do outro estabelecimento
+    dados = EstabelecimentoAtualizacao(identificador="manicure-maria")  # pyright: ignore[reportCallIssue]
+    with pytest.raises(EstabelecimentoDuplicadoError, match="Identificador"):
+        atualizar_estabelecimento(estabelecimento, dados, sessao_teste)
+    # Verifica que o estabelecimento não foi alterado
+    sessao_teste.refresh(estabelecimento)
+    assert estabelecimento.identificador == "barbearia-joao"

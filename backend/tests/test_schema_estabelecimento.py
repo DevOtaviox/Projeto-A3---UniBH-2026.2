@@ -312,3 +312,29 @@ def test_schema_estabelecimento_publico_resposta():
     assert "email" not in resposta.model_dump()
     assert "senha_hash" not in resposta.model_dump()
     assert "ativo" not in resposta.model_dump()
+
+def test_schema_estabelecimento_identificador_reservado():
+    # Cria dados com o identificador reservado "me"
+    dados = {
+        "nome": "Barbearia João",
+        "endereco": "Rua das Flores, 100",
+        "tipo_documento": "CPF",
+        "documento": "12345678901",
+        "identificador": "me",
+        "email": "joao@example.com",
+        "senha": "Senha123",
+    }
+    # Tenta criar objeto usando o schema
+    # "me" é usado na rota /estabelecimentos/me
+    with pytest.raises(ValidationError, match="reservado"):
+        EstabelecimentoCriacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_atualizacao_identificador_invalido():
+    # Tenta atualizar com identificador fora do formato
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(identificador="Barbearia João")  # pyright: ignore[reportCallIssue]
+
+def test_schema_estabelecimento_atualizacao_identificador_reservado():
+    # Tenta atualizar com identificador reservado
+    with pytest.raises(ValidationError, match="reservado"):
+        EstabelecimentoAtualizacao(identificador="me")  # pyright: ignore[reportCallIssue]
