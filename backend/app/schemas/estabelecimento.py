@@ -1,30 +1,7 @@
 import re
 from typing import Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    EmailStr,
-    Field,
-    field_validator,
-    model_validator,
-)
-
-# Formato do identificador: só letras minúsculas, números e hífen
-# Não pode começar nem terminar com hífen
-# Não pode ter vários hífens seguidos
-PADRAO_IDENTIFICADOR = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
-
-# Identificadores reservados para rotas da API
-# Ex.: /estabelecimentos/me é a rota do estabelecimento autenticado
-IDENTIFICADORES_RESERVADOS = {"me"}
-
-
-# Valida se o identificador não é uma palavra reservada
-def validar_identificador_reservado(identificador: str | None) -> str | None:
-    if identificador in IDENTIFICADORES_RESERVADOS:
-        raise ValueError("Este identificador é reservado. Escolha outro.")
-    return identificador
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 # Cadastro de estabelecimento
@@ -35,19 +12,15 @@ class EstabelecimentoCriacao(BaseModel):
     tipo_documento: Literal["CPF", "CNPJ"]
     documento: str = Field(min_length=11, max_length=14)
     # Valida identificador só com letras, números e hífen
+    # Não pode começar nem terminar com hífen
+    # Não pode ter vários hífens seguidos
     identificador: str = Field(
         min_length=1,
         max_length=100,
-        pattern=PADRAO_IDENTIFICADOR,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
     )
     email: EmailStr
     senha: str = Field(min_length=8, max_length=128)
-    # Módulo do pydantic pra validar um campo específico
-    @field_validator("identificador")
-    @classmethod
-    def validar_identificador(cls, identificador: str) -> str:
-        return validar_identificador_reservado(identificador)
-
     # Módulo do pydantic pra validar dados
     @model_validator(mode="after")
     def validar_documento(self):
@@ -69,22 +42,8 @@ class EstabelecimentoAtualizacao(BaseModel):
     imagem: str | None = Field(default=None, max_length=500)
     tipo_documento: Literal["CPF", "CNPJ"] | None = None
     documento: str | None = Field(default=None, min_length=11, max_length=14)
-    # Mesmo formato do cadastro
-    identificador: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=100,
-        pattern=PADRAO_IDENTIFICADOR,
-    )
-    email: EmailStr | None = None
-    senha: str | None = Field(default=None, min_length=8, max_length=128)
-    ativo: bool | None = None
-    # Módulo do pydantic pra validar um campo específico
-    @field_validator("identificador")
-    @classmethod
-    def validar_identificador(cls, identificador: str | None) -> str | None:
-        return validar_identificador_reservado(identificador)
-
+    # Rejeita campos que não fazem parte do schema
+    model_config = ConfigDict(extra="forbid")
     # Módulo do pydantic pra validar dados
     @model_validator(mode="after")
     def validar_atualizacao(self):
@@ -97,10 +56,6 @@ class EstabelecimentoAtualizacao(BaseModel):
             "endereco",
             "tipo_documento",
             "documento",
-            "identificador",
-            "email",
-            "senha",
-            "ativo",
         )
         for campo in campos_obrigatorios:
             if campo in self.model_fields_set and getattr(self, campo) is None:
@@ -109,20 +64,16 @@ class EstabelecimentoAtualizacao(BaseModel):
         if (
             ("tipo_documento" in self.model_fields_set)
             != ("documento" in self.model_fields_set)
-        ):
-            raise ValueError("Informe o tipo e o número do documento juntos.")
-        # Verifica se tipo_documento e documento estão sendo atualizados
-        if (
-            self.tipo_documento is not None
-            and self.documento is not None
-        ):
-            # Valida CPF com 11 números
+        ): raise ValueError("Informe o tipo e o número do documento juntos.")
+        # Valida o documento quando estiver sendo atualizado
+        if self.tipo_documento is not None and self.documento is not None:
             if self.tipo_documento == "CPF":
                 if not re.fullmatch(r"[0-9]{11}", self.documento):
                     raise ValueError("CPF deve conter exatamente 11 números.")
-            # Valida CNPJ com 12 caracteres + 2 números
             elif not re.fullmatch(r"[A-Za-z0-9]{12}[0-9]{2}", self.documento):
-                raise ValueError("CNPJ deve conter 12 caracteres alfanuméricos e 2 números.")
+                raise ValueError(
+                    "CNPJ deve conter 12 caracteres alfanuméricos e 2 números."
+                )
         return self
 
 # Schema de resposta com dados para o front-end
