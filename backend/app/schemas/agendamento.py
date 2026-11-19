@@ -86,3 +86,11 @@ class AgendamentoResposta(BaseModel):
     data_cancelamento: datetime | None
     # Converte um objeto do SQLAlchemy em um dicionário
     model_config = ConfigDict(from_attributes=True)
+
+# Schema de resposta com os horários disponíveis para agendamento
+# horarios: horários de início livres para o serviço na data consultada
+class DisponibilidadeResposta(BaseModel):
+    id_servico: int
+    data_agendamento: date
+    duracao_minutos: int
+    horarios: list[time]
