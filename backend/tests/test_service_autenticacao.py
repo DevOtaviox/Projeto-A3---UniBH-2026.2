@@ -1,11 +1,13 @@
 import pytest
 
-from app.core.security import gerar_hash_senha
+from app.core.security import gerar_hash_senha, verificar_senha
 from app.core.tokens import validar_token_acesso
 from app.models.estabelecimento import Estabelecimento
-from app.schemas.autenticacao import LoginRequisicao
+from app.schemas.autenticacao import AlteracaoSenhaRequisicao, LoginRequisicao
 from app.services.autenticacao import (
     CredenciaisInvalidasError,
+    SenhaAtualIncorretaError,
+    alterar_senha,
     autenticar_estabelecimento,
 )
 
@@ -82,3 +84,47 @@ def test_autenticar_estabelecimento_inativo(sessao_teste):
     # Tenta autenticar
     with pytest.raises(CredenciaisInvalidasError):
         autenticar_estabelecimento(dados, sessao_teste)
+
+def test_alterar_senha(sessao_teste):
+    # Cria estabelecimento com a senha atual
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    dados = AlteracaoSenhaRequisicao(
+        senha_atual="Senha123",
+        nova_senha="NovaSenha456",
+    )
+    # Altera a senha
+    alterar_senha(dados, estabelecimento.id_estabelecimento, sessao_teste)
+    sessao_teste.refresh(estabelecimento)
+    # A nova senha passa a valer e a antiga não
+    assert verificar_senha("NovaSenha456", estabelecimento.senha_hash)
+    assert not verificar_senha("Senha123", estabelecimento.senha_hash)
+    # Login funciona com a nova senha
+    token = autenticar_estabelecimento(
+        LoginRequisicao(email="joao@example.com", senha="NovaSenha456"),
+        sessao_teste,
+    )
+    assert validar_token_acesso(token) == estabelecimento.id_estabelecimento
+
+def test_alterar_senha_atual_incorreta(sessao_teste):
+    # Cria estabelecimento
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    hash_anterior = estabelecimento.senha_hash
+    dados = AlteracaoSenhaRequisicao(
+        senha_atual="SenhaErrada",
+        nova_senha="NovaSenha456",
+    )
+    # Tenta alterar com a senha atual errada
+    with pytest.raises(SenhaAtualIncorretaError):
+        alterar_senha(dados, estabelecimento.id_estabelecimento, sessao_teste)
+    # O hash não muda
+    sessao_teste.refresh(estabelecimento)
+    assert estabelecimento.senha_hash == hash_anterior
+
+def test_alterar_senha_estabelecimento_inexistente(sessao_teste):
+    # Id que não existe no db
+    dados = AlteracaoSenhaRequisicao(
+        senha_atual="Senha123",
+        nova_senha="NovaSenha456",
+    )
+    with pytest.raises(SenhaAtualIncorretaError):
+        alterar_senha(dados, 999, sessao_teste)
