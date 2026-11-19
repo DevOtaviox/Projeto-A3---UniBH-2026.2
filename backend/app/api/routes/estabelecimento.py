@@ -43,6 +43,20 @@ def criar_estabelecimento(
         ) from erro
     return estabelecimento
 
+# Consulta dos dados do estabelecimento autenticado
+@router.get(
+    "/estabelecimentos/me",
+    response_model=EstabelecimentoResposta,
+)
+def consultar_estabelecimento_atual(
+    estabelecimento: Annotated[
+        Estabelecimento,
+        Depends(obter_estabelecimento_atual),
+    ],
+) -> Estabelecimento:
+    # Retorna o estabelecimento identificado pelo token
+    return estabelecimento
+
 @router.get(
     "/estabelecimentos/{identificador}",
     response_model=EstabelecimentoPublicoResposta,

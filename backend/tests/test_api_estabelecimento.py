@@ -1,10 +1,9 @@
 import pytest
-from fastapi.testclient import TestClient
-
 from app.core.tokens import criar_token_acesso
 from app.db.session import obter_sessao_banco
 from app.main import app
 from app.models.estabelecimento import Estabelecimento
+from fastapi.testclient import TestClient
 
 
 # Cria dados para cadastro
@@ -304,3 +303,59 @@ def test_api_atualizar_estabelecimento_ativo_nao_permitido(cliente_teste):
     )
     # Resultado esperado e comparações
     assert resposta.status_code == 422
+
+def test_api_consultar_estabelecimento_atual(cliente_teste):
+    # Cadastra  estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria cabeçalho de autenticação
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Consulta o estabelecimento autenticado
+    resposta = cliente_teste.get("/estabelecimentos/me", headers=cabecalho)
+    # Converte resposta para dicionário
+    estabelecimento = resposta.json()
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert estabelecimento["id_estabelecimento"] == cadastro.json()["id_estabelecimento"]
+    assert estabelecimento["nome"] == "Barbearia João"
+    assert estabelecimento["endereco"] == "Rua das Flores, 100"
+    assert estabelecimento["documento"] == "12345678901"
+    assert estabelecimento["identificador"] == "barbearia-joao"
+    assert estabelecimento["email"] == "joao@example.com"
+    assert estabelecimento["ativo"] is True
+    # Verifica ausência de senha
+    assert "senha" not in estabelecimento
+    assert "senha_hash" not in estabelecimento
+
+def test_api_consultar_estabelecimento_atual_sem_autenticacao(cliente_teste):
+    # Tenta consultar os dados sem token
+    resposta = cliente_teste.get("/estabelecimentos/me")
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401
+
+def test_api_consultar_estabelecimento_atual_token_invalido(cliente_teste):
+    # Cria header com token inválido
+    cabecalho = {
+        "Authorization": "Bearer token-invalido",
+    }
+    # Tenta consultar os dados
+    resposta = cliente_teste.get("/estabelecimentos/me", headers=cabecalho)
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401
+
+def test_api_consultar_estabelecimento_atual_inativo(cliente_teste, sessao_teste):
+    # Cadastra estabelecimento
+    dados = criar_dados_estabelecimento()
+    cadastro = cliente_teste.post("/estabelecimentos", json=dados)
+    # Cria header
+    id_estabelecimento = cadastro.json()["id_estabelecimento"]
+    cabecalho = criar_cabecalho(id_estabelecimento)
+    # Busca o estabelecimento no db e desativa
+    estabelecimento = sessao_teste.get(Estabelecimento, id_estabelecimento)
+    assert estabelecimento is not None
+    estabelecimento.ativo = False
+    sessao_teste.commit()
+    # Tenta consultar o estabelecimento
+    resposta = cliente_teste.get("/estabelecimentos/me", headers=cabecalho)
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401
