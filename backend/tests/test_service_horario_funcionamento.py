@@ -3,6 +3,7 @@ from datetime import time
 import pytest
 
 from app.models.estabelecimento import Estabelecimento
+from app.services.estabelecimento import EstabelecimentoNaoEncontradoError
 from app.schemas.horario_funcionamento import (
     HorarioFuncionamentoAtualizacao,
     HorarioFuncionamentoCriacao,
@@ -14,6 +15,7 @@ from app.services.horario_funcionamento import (
     buscar_horario,
     definir_horario,
     obter_horario,
+    obter_horario_publico,
 )
 
 
@@ -232,3 +234,42 @@ def test_atualizar_horario_nao_configurado(sessao_teste):
             estabelecimento.id_estabelecimento,
             sessao_teste,
         )
+
+def test_obter_horario_publico(sessao_teste):
+    # Cria estabelecimento com horário configurado
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    definir_horario(
+        criar_dados_horario(),
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    # Consulta pelo identificador
+    horario = obter_horario_publico("barbearia-joao", sessao_teste)
+    # Resultado esperado e comparações
+    assert horario.id_estabelecimento == estabelecimento.id_estabelecimento
+    assert horario.hora_abertura == time(9, 0)
+
+def test_obter_horario_publico_estabelecimento_inexistente(sessao_teste):
+    # Consulta identificador que não existe
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        obter_horario_publico("nao-existe", sessao_teste)
+
+def test_obter_horario_publico_estabelecimento_inativo(sessao_teste):
+    # Cria estabelecimento inativo com horário configurado
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    definir_horario(
+        criar_dados_horario(),
+        estabelecimento.id_estabelecimento,
+        sessao_teste,
+    )
+    estabelecimento.ativo = False
+    sessao_teste.commit()
+    # Estabelecimento inativo não aparece na consulta pública
+    with pytest.raises(EstabelecimentoNaoEncontradoError):
+        obter_horario_publico("barbearia-joao", sessao_teste)
+
+def test_obter_horario_publico_nao_configurado(sessao_teste):
+    # Cria estabelecimento sem horário
+    criar_estabelecimento(sessao_teste)
+    with pytest.raises(HorarioNaoConfiguradoError):
+        obter_horario_publico("barbearia-joao", sessao_teste)
