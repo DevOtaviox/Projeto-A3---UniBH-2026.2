@@ -196,3 +196,62 @@ def test_api_horario_sem_autenticacao(cliente_teste):
         "/horario-funcionamento",
         json={"sabado": True},
     ).status_code == 401
+
+def test_api_consultar_horario_publico(cliente_teste, cabecalho):
+    # Configura o horário com o token do proprietário
+    cliente_teste.put(
+        "/horario-funcionamento",
+        json=criar_dados_horario(),
+        headers=cabecalho,
+    )
+    # Consulta sem token pelo identificador
+    resposta = cliente_teste.get(
+        "/estabelecimentos/barbearia-joao/horario-funcionamento"
+    )
+    dados = resposta.json()
+    # Resultado esperado e comparações
+    assert resposta.status_code == 200
+    assert dados["segunda"] is True
+    assert dados["sabado"] is False
+    assert dados["hora_abertura"] == "09:00:00"
+    assert dados["hora_fechamento"] == "18:00:00"
+    assert dados["inicio_intervalo"] == "12:00:00"
+    assert dados["fim_intervalo"] == "13:00:00"
+
+def test_api_consultar_horario_publico_estabelecimento_inexistente(cliente_teste):
+    # Consulta identificador que não existe
+    resposta = cliente_teste.get(
+        "/estabelecimentos/nao-existe/horario-funcionamento"
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 404
+    assert resposta.json()["detail"] == "Estabelecimento não encontrado."
+
+def test_api_consultar_horario_publico_estabelecimento_inativo(
+    cliente_teste,
+    sessao_teste,
+):
+    # Cria estabelecimento inativo
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    cliente_teste.put(
+        "/horario-funcionamento",
+        json=criar_dados_horario(),
+        headers=criar_cabecalho(estabelecimento),
+    )
+    estabelecimento.ativo = False
+    sessao_teste.commit()
+    # Consulta pública
+    resposta = cliente_teste.get(
+        "/estabelecimentos/barbearia-joao/horario-funcionamento"
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 404
+
+def test_api_consultar_horario_publico_nao_configurado(cliente_teste, cabecalho):
+    # Estabelecimento existe mas não configurou o horário
+    resposta = cliente_teste.get(
+        "/estabelecimentos/barbearia-joao/horario-funcionamento"
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 404
+    assert resposta.json()["detail"] == "Horário de funcionamento não configurado."

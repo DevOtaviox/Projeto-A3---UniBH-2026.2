@@ -7,6 +7,7 @@ from app.schemas.horario_funcionamento import (
     HorarioFuncionamentoAtualizacao,
     HorarioFuncionamentoCriacao,
 )
+from app.services.estabelecimento import buscar_estabelecimento_publico
 
 
 # Exceção para estabelecimento que ainda não configurou o horário
@@ -45,6 +46,16 @@ def obter_horario(
             "Horário de funcionamento não configurado."
         )
     return horario
+
+# Consulta pública do horário pelo identificador do estabelecimento
+# Usada pela página do cliente, sem autenticação
+# Estabelecimento inativo ou inexistente levanta EstabelecimentoNaoEncontradoError
+def obter_horario_publico(
+    identificador: str,
+    sessao: Session,
+) -> HorarioFuncionamento:
+    estabelecimento = buscar_estabelecimento_publico(identificador, sessao)
+    return obter_horario(estabelecimento.id_estabelecimento, sessao)
 
 # Cria ou substitui o horário de funcionamento inteiro (PUT)
 def definir_horario(

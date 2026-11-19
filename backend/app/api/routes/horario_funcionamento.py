@@ -12,12 +12,14 @@ from app.schemas.horario_funcionamento import (
     HorarioFuncionamentoCriacao,
     HorarioFuncionamentoResposta,
 )
+from app.services.estabelecimento import EstabelecimentoNaoEncontradoError
 from app.services.horario_funcionamento import (
     HorarioInvalidoError,
     HorarioNaoConfiguradoError,
     atualizar_horario,
     definir_horario,
     obter_horario,
+    obter_horario_publico,
 )
 
 # Endpoints do horário de funcionamento do proprietário
@@ -27,6 +29,10 @@ router = APIRouter(
     prefix="/horario-funcionamento",
     tags=["Horário de funcionamento"],
 )
+
+# Endpoint público usado pelo cliente na página do estabelecimento
+# Não exige autenticação
+router_publico = APIRouter(tags=["Horário de funcionamento"])
 
 # Consulta do horário de funcionamento
 @router.get("", response_model=HorarioFuncionamentoResposta)
@@ -85,5 +91,27 @@ def alterar_horario(
     except HorarioInvalidoError as erro:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(erro),
+        ) from erro
+
+# Consulta pública do horário de funcionamento pelo identificador
+@router_publico.get(
+    "/estabelecimentos/{identificador}/horario-funcionamento",
+    response_model=HorarioFuncionamentoResposta,
+)
+def consultar_horario_publico(
+    identificador: str,
+    sessao: Annotated[Session, Depends(obter_sessao_banco)],
+) -> HorarioFuncionamento:
+    # Responde como 404 se o estabelecimento não existir, estiver inativo
+    # ou ainda não tiver configurado o horário
+    try:
+        return obter_horario_publico(identificador, sessao)
+    except (
+        EstabelecimentoNaoEncontradoError,
+        HorarioNaoConfiguradoError,
+    ) as erro:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(erro),
         ) from erro
