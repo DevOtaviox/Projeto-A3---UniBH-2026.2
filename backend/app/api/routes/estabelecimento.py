@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import obter_estabelecimento_atual
@@ -18,6 +18,13 @@ from app.services.estabelecimento import (
     atualizar_estabelecimento,
     buscar_estabelecimento_publico,
     cadastrar_estabelecimento,
+)
+from app.services.imagem_estabelecimento import (
+    TAMANHO_MAXIMO_IMAGEM,
+    ImagemInvalidaError,
+    ImagemMuitoGrandeError,
+    remover_imagem_estabelecimento,
+    salvar_imagem_estabelecimento,
 )
 
 router = APIRouter(tags=["Estabelecimentos"])
@@ -109,3 +116,51 @@ def alterar_estabelecimento(
             detail=str(erro),
         ) from erro
     return estabelecimento_atualizado
+
+@router.post(
+    "/estabelecimentos/me/imagem",
+    response_model=EstabelecimentoResposta,
+)
+async def enviar_imagem_estabelecimento(
+    arquivo: Annotated[UploadFile, File()],
+    estabelecimento_atual: Annotated[Estabelecimento, Depends(obter_estabelecimento_atual)],
+    sessao: Annotated[Session, Depends(obter_sessao_banco)],
+):
+    # Lê o arquivo até o limite permitido mais um byte
+    # Evita ler um arquivo inteiro se ele for grande demais
+    # Se o arquivo for maior que 2MB, o endpoint ainda lê até 2MB + 1 e o service ainda lança erro
+    conteudo = await arquivo.read(TAMANHO_MAXIMO_IMAGEM + 1)
+    # Salva ou substitui a imagem do estabelecimento autenticado
+    try:
+        return salvar_imagem_estabelecimento(
+            estabelecimento_atual.id_estabelecimento,
+            conteudo,
+            arquivo.content_type or "",
+            sessao,
+        )
+    # Retorna 413 se a imagem ultrapassar o tamanho permitido
+    except ImagemMuitoGrandeError as erro:
+        raise HTTPException(
+            status_code=413,
+            detail=str(erro),
+        ) from erro
+    # Retorna 422 se a imagem for inválida
+    except ImagemInvalidaError as erro:
+        raise HTTPException(
+            status_code=422,
+            detail=str(erro),
+        ) from erro
+
+@router.delete(
+    "/estabelecimentos/me/imagem",
+    response_model=EstabelecimentoResposta,
+)
+def excluir_imagem_estabelecimento(
+    estabelecimento_atual: Annotated[Estabelecimento, Depends(obter_estabelecimento_atual)],
+    sessao: Annotated[Session, Depends(obter_sessao_banco)],
+):
+    # Remove a imagem do estabelecimento autenticado
+    return remover_imagem_estabelecimento(
+        estabelecimento_atual.id_estabelecimento,
+        sessao,
+    )

@@ -1,11 +1,12 @@
-
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 import app.models
 from app.api.router import api_router
+from app.core.config import DIRETORIO_IMAGENS
 from app.db.base import BaseModelos
 from app.db.session import motor_banco
 
@@ -38,3 +39,14 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+# Cria diretório se não existir
+DIRETORIO_IMAGENS.mkdir(parents=True, exist_ok=True)
+
+# App para separado para disponibilizar as imagens
+# Montado em ./backend/uploads/estabelecimentos/{imagem}
+app.mount(
+    "/uploads/estabelecimentos",
+    StaticFiles(directory=DIRETORIO_IMAGENS),
+    name="imagens-estabelecimentos",
+)

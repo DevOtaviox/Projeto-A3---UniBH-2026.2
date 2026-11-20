@@ -4,6 +4,7 @@ uvicorn==0.54.0
 SQLAlchemy==2.1.6
 pydantic==2.14.1
 email-validator==2.3.0
+python-multipart==0.0.34
 
 # Testes
 pytest==9.2.0

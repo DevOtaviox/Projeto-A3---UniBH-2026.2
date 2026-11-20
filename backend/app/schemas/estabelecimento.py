@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 class EstabelecimentoCriacao(BaseModel):
     nome: str = Field(min_length=1, max_length=150)
     endereco: str = Field(min_length=1, max_length=300)
-    imagem: str | None = Field(default=None, max_length=500)
     tipo_documento: Literal["CPF", "CNPJ"]
     documento: str = Field(min_length=11, max_length=14)
     # Valida identificador só com letras, números e hífen
@@ -21,6 +20,8 @@ class EstabelecimentoCriacao(BaseModel):
     )
     email: EmailStr
     senha: str = Field(min_length=8, max_length=128)
+    # Proíbe campos não listados no schema
+    model_config = ConfigDict(extra="forbid")
     # Módulo do pydantic pra validar dados
     @model_validator(mode="after")
     def validar_documento(self):
@@ -39,7 +40,6 @@ class EstabelecimentoCriacao(BaseModel):
 class EstabelecimentoAtualizacao(BaseModel):
     nome: str | None = Field(default=None, min_length=1, max_length=150)
     endereco: str | None = Field(default=None, min_length=1, max_length=300)
-    imagem: str | None = Field(default=None, max_length=500)
     tipo_documento: Literal["CPF", "CNPJ"] | None = None
     documento: str | None = Field(default=None, min_length=11, max_length=14)
     # Rejeita campos que não fazem parte do schema
