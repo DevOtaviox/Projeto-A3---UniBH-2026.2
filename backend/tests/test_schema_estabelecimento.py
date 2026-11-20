@@ -31,7 +31,6 @@ def test_schema_estabelecimento_criacao_cpf():
     assert estabelecimento.identificador == "barbearia-joao"
     assert estabelecimento.email == "joao@example.com"
     assert estabelecimento.senha == "Senha123"
-    assert estabelecimento.imagem is None
 
 def test_schema_estabelecimento_criacao_cnpj():
     # Cria dados para criação do estabelecimento com CNPJ
@@ -199,7 +198,6 @@ def test_schema_estabelecimento_resposta():
         id_estabelecimento=1,
         nome="Barbearia João",
         endereco="Rua das Flores, 100",
-        imagem=None,
         tipo_documento="CNPJ",
         documento="12ABC34501DE35",
         identificador="barbearia-joao",
@@ -213,7 +211,6 @@ def test_schema_estabelecimento_resposta():
     assert resposta.id_estabelecimento == 1
     assert resposta.nome == "Barbearia João"
     assert resposta.endereco == "Rua das Flores, 100"
-    assert resposta.imagem is None
     assert resposta.tipo_documento == "CNPJ"
     assert resposta.documento == "12ABC34501DE35"
     assert resposta.identificador == "barbearia-joao"
@@ -290,7 +287,6 @@ def test_schema_estabelecimento_publico_resposta():
         id_estabelecimento=1,
         nome="Barbearia João",
         endereco="Rua das Flores, 100",
-        imagem=None,
         tipo_documento="CPF",
         documento="12345678901",
         identificador="barbearia-joao",
@@ -304,7 +300,6 @@ def test_schema_estabelecimento_publico_resposta():
     assert resposta.id_estabelecimento == 1
     assert resposta.nome == "Barbearia João"
     assert resposta.endereco == "Rua das Flores, 100"
-    assert resposta.imagem is None
     assert resposta.identificador == "barbearia-joao"
     # Verifica ausencia das informações privadas
     assert "tipo_documento" not in resposta.model_dump()
@@ -356,6 +351,15 @@ def test_schema_estabelecimento_atualizacao_ativo_nao_permitido():
     # Cria dados para atualização do status
     dados = {
         "ativo": False,
+    }
+    # Tenta criar objeto usando o schema
+    with pytest.raises(ValidationError):
+        EstabelecimentoAtualizacao(**dados)  # pyright: ignore[reportArgumentType]
+
+def test_schema_estabelecimento_atualizacao_imagem_nao_permitida():
+    # Cria dados com campo para atualizar imagem
+    dados = {
+        "imagem": "/uploads/estabelecimentos/foto.png",
     }
     # Tenta criar objeto usando o schema
     with pytest.raises(ValidationError):

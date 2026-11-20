@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import gerar_hash_senha
 from app.models.estabelecimento import Estabelecimento
-from app.schemas.estabelecimento import EstabelecimentoCriacao, EstabelecimentoAtualizacao
+from app.schemas.estabelecimento import (
+    EstabelecimentoAtualizacao,
+    EstabelecimentoCriacao,
+)
 
 
 # Exceção para informações duplicadas
@@ -41,7 +44,6 @@ def cadastrar_estabelecimento(
     estabelecimento = Estabelecimento(
         nome=dados.nome,
         endereco=dados.endereco,
-        imagem=dados.imagem,
         tipo_documento=dados.tipo_documento,
         documento=dados.documento,
         identificador=dados.identificador,

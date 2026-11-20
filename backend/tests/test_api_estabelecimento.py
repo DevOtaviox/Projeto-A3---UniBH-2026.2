@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from app.core.tokens import criar_token_acesso
 from app.db.session import obter_sessao_banco
@@ -359,3 +361,96 @@ def test_api_consultar_estabelecimento_atual_inativo(cliente_teste, sessao_teste
     resposta = cliente_teste.get("/estabelecimentos/me", headers=cabecalho)
     # Resultado esperado e comparações
     assert resposta.status_code == 401
+
+def test_enviar_imagem_estabelecimento(cliente_teste, tmp_path, monkeypatch):
+    # Usa diretório temporário para armazenar imagens
+    monkeypatch.setattr(
+        "app.services.imagem_estabelecimento.DIRETORIO_IMAGENS",
+        tmp_path,
+    )
+    # Cadastra estabelecimento e cria token
+    cadastro = cliente_teste.post(
+        "/estabelecimentos",
+        json=criar_dados_estabelecimento(),
+    )
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Envia a imagem para o endpoint
+    conteudo = b"\x89PNG\r\n\x1a\n" + b"conteudo-imagem"
+    resposta = cliente_teste.post(
+        "/estabelecimentos/me/imagem",
+        headers=cabecalho,
+        files={"arquivo": ("foto.png", conteudo, "image/png")},
+    )
+    # Verifica a resposta e o arquivo salvo
+    assert resposta.status_code == 200
+    imagem = resposta.json()["imagem"]
+    assert imagem.startswith("/uploads/estabelecimentos/")
+    assert (tmp_path / Path(imagem).name).read_bytes() == conteudo
+
+def test_substituir_imagem_estabelecimento(cliente_teste, tmp_path, monkeypatch):
+    # Usa diretório temporário para armazenar imagens
+    monkeypatch.setattr(
+        "app.services.imagem_estabelecimento.DIRETORIO_IMAGENS",
+        tmp_path,
+    )
+    # Cadastra estabelecimento e cria token
+    cadastro = cliente_teste.post(
+        "/estabelecimentos",
+        json=criar_dados_estabelecimento(),
+    )
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Envia a primeira imagem
+    primeira = cliente_teste.post(
+        "/estabelecimentos/me/imagem",
+        headers=cabecalho,
+        files={"arquivo": ("foto.png", b"\x89PNG\r\n\x1a\nprimeira", "image/png")},
+    )
+    imagem_anterior = primeira.json()["imagem"]
+    caminho_anterior = tmp_path / Path(imagem_anterior).name
+    # Substitui a imagem
+    segunda = cliente_teste.post(
+        "/estabelecimentos/me/imagem",
+        headers=cabecalho,
+        files={"arquivo": ("foto.jpg", b"\xff\xd8\xffsegunda", "image/jpeg")},
+    )
+    # Verifica a substituição
+    assert segunda.status_code == 200
+    imagem_nova = segunda.json()["imagem"]
+    assert imagem_nova != imagem_anterior
+    assert (tmp_path / Path(imagem_nova).name).is_file()
+    assert not caminho_anterior.exists()
+
+def test_excluir_imagem_estabelecimento(cliente_teste, tmp_path, monkeypatch):
+    # Usa diretório temporário para armazenar imagens
+    monkeypatch.setattr(
+        "app.services.imagem_estabelecimento.DIRETORIO_IMAGENS",
+        tmp_path,
+    )
+    # Cadastra estabelecimento e cria token
+    cadastro = cliente_teste.post(
+        "/estabelecimentos",
+        json=criar_dados_estabelecimento(),
+    )
+    cabecalho = criar_cabecalho(cadastro.json()["id_estabelecimento"])
+    # Envia uma imagem
+    envio = cliente_teste.post(
+        "/estabelecimentos/me/imagem",
+        headers=cabecalho,
+        files={"arquivo": ("foto.png", b"\x89PNG\r\n\x1a\nimagem", "image/png")},
+    )
+    caminho_imagem = tmp_path / Path(envio.json()["imagem"]).name
+    # Remove a imagem pelo endpoint
+    resposta = cliente_teste.delete(
+        "/estabelecimentos/me/imagem",
+        headers=cabecalho,
+    )
+    # Verifica se foi deletado
+    assert resposta.status_code == 200
+    assert resposta.json()["imagem"] is None
+    assert not caminho_imagem.exists()
+    # Verifica se o db foi atualizado
+    consulta = cliente_teste.get(
+        "/estabelecimentos/me",
+        headers=cabecalho,
+    )
+    assert consulta.json()["imagem"] is None

@@ -23,3 +23,6 @@ ALGORITMO_JWT = "HS256"
 
 # Define o tempo de expiração
 TEMPO_EXPIRACAO_TOKEN_MINUTOS = 30
+
+# Diretório para imagens dos estabelecimentos
+DIRETORIO_IMAGENS = DIR_BACKEND / "uploads" / "estabelecimentos"
