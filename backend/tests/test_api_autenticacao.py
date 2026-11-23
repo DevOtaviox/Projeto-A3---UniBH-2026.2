@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.security import gerar_hash_senha
-from app.core.tokens import validar_token_acesso
+from app.core.tokens import criar_token_acesso, validar_token_acesso
 from app.db.session import obter_sessao_banco
 from app.main import app
 from app.models.estabelecimento import Estabelecimento
@@ -119,3 +119,69 @@ def test_api_login_dados_invalidos(cliente_teste):
     resposta = cliente_teste.post("/auth/login", json=dados)
     # Resultado esperado e comparações
     assert resposta.status_code == 422
+
+# Cria o cabeçalho de autenticação com o token do estabelecimento
+def criar_cabecalho(estabelecimento):
+    token = criar_token_acesso(estabelecimento.id_estabelecimento)
+    return {"Authorization": f"Bearer {token}"}
+
+def test_api_alterar_senha(cliente_teste, sessao_teste):
+    # Cria estabelecimento
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    # Altera a senha
+    resposta = cliente_teste.patch(
+        "/auth/senha",
+        json={"senha_atual": "Senha123", "nova_senha": "NovaSenha456"},
+        headers=criar_cabecalho(estabelecimento),
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 204
+    assert resposta.content == b""
+    # Login com a senha antiga falha e com a nova funciona
+    assert cliente_teste.post(
+        "/auth/login",
+        json={"email": "joao@example.com", "senha": "Senha123"},
+    ).status_code == 401
+    assert cliente_teste.post(
+        "/auth/login",
+        json={"email": "joao@example.com", "senha": "NovaSenha456"},
+    ).status_code == 200
+
+def test_api_alterar_senha_atual_incorreta(cliente_teste, sessao_teste):
+    # Cria estabelecimento
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    # Tenta alterar com a senha atual errada
+    resposta = cliente_teste.patch(
+        "/auth/senha",
+        json={"senha_atual": "SenhaErrada", "nova_senha": "NovaSenha456"},
+        headers=criar_cabecalho(estabelecimento),
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 400
+    assert resposta.json()["detail"] == "Senha atual incorreta."
+
+def test_api_alterar_senha_nova_invalida(cliente_teste, sessao_teste):
+    # Cria estabelecimento
+    estabelecimento = criar_estabelecimento(sessao_teste)
+    cabecalho = criar_cabecalho(estabelecimento)
+    # Nova senha curta
+    assert cliente_teste.patch(
+        "/auth/senha",
+        json={"senha_atual": "Senha123", "nova_senha": "curta"},
+        headers=cabecalho,
+    ).status_code == 422
+    # Nova senha igual à atual
+    assert cliente_teste.patch(
+        "/auth/senha",
+        json={"senha_atual": "Senha123", "nova_senha": "Senha123"},
+        headers=cabecalho,
+    ).status_code == 422
+
+def test_api_alterar_senha_sem_autenticacao(cliente_teste):
+    # Tenta alterar sem token
+    resposta = cliente_teste.patch(
+        "/auth/senha",
+        json={"senha_atual": "Senha123", "nova_senha": "NovaSenha456"},
+    )
+    # Resultado esperado e comparações
+    assert resposta.status_code == 401
