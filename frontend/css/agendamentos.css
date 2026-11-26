@@ -1,0 +1,148 @@
+
+
+/* barra de filtros */
+.filtros {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 18px 20px;
+    background: var(--branco, #ffffff);
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 12px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filtro-grupo label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto, #263238);
+}
+
+.filtro-grupo select,
+.filtro-grupo input {
+    min-width: 170px;
+    padding: 10px 12px;
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 8px;
+    background: var(--branco, #ffffff);
+    color: var(--texto, #263238);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filtro-grupo select:focus,
+.filtro-grupo input:focus {
+    border-color: var(--azul-principal, #309BB8);
+    box-shadow: 0 0 0 3px rgba(48, 155, 184, 0.12);
+}
+
+.btn-limpar {
+    padding: 10px 16px;
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--cinza, #77838b);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-limpar:hover {
+    background: var(--fundo, #f5f7f9);
+    color: var(--texto, #263238);
+}
+
+/* etiqueta de status */
+.badge-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-pendente {
+    background: #fff4d6;
+    color: #8a6100;
+}
+
+.badge-confirmado {
+    background: #dff3f8;
+    color: #1f6f85;
+}
+
+.badge-concluido {
+    background: #e0f5e6;
+    color: #23753a;
+}
+
+.badge-cancelado {
+    background: #fbe3e3;
+    color: #b03a3a;
+}
+
+/* botoes de acao da tabela */
+.btn-confirmar,
+.btn-cancelar-agendamento,
+.btn-concluir {
+    padding: 7px 12px;
+    margin-right: 6px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-confirmar,
+.btn-concluir {
+    border: 1px solid var(--azul-principal, #309BB8);
+    background: var(--azul-principal, #309BB8);
+    color: var(--branco, #ffffff);
+}
+
+.btn-confirmar:hover,
+.btn-concluir:hover {
+    background: var(--azul-hover, #267f99);
+}
+
+.btn-cancelar-agendamento {
+    border: 1px solid #d64545;
+    background: transparent;
+    color: #d64545;
+}
+
+.btn-cancelar-agendamento:hover {
+    background: #d64545;
+    color: var(--branco, #ffffff);
+}
+
+@media (max-width: 760px) {
+
+    .filtro-grupo,
+    .filtro-grupo select,
+    .filtro-grupo input,
+    .btn-limpar {
+        width: 100%;
+    }
+}
+
+/* telefone embaixo do nome do cliente */
+.telefone-cliente {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--cinza, #77838b);
+}

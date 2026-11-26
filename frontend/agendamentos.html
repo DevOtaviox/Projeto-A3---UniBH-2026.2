@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgendaAi - Agendamentos</title>
+
+    <!-- reaproveita o layout da tela de servicos (sidebar, topbar, tabela) -->
+    <link rel="stylesheet" href="css/servicos.css">
+    <!-- estilos extras so desta tela (filtros e status) -->
+    <link rel="stylesheet" href="css/agendamentos.css">
+</head>
+
+<body>
+
+    <main class="dashboard-container">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <h1>AgendaAi</h1>
+                <p>Seu tempo, bem organizado</p>
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a href="inicio.html" class="menu-item">
+                    Início
+                </a>
+
+                <a href="servicos.html" class="menu-item">
+                    Serviços
+                </a>
+
+                <a href="agendamentos.html" class="menu-item active">
+                    Agendamentos
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-sair" type="button">
+                    Sair
+                </button>
+            </div>
+
+        </aside>
+
+        <section class="main-content">
+
+            <header class="topbar">
+                <h2>Gerenciamento de agendamentos</h2>
+
+                <div class="user-info">
+                    <span>Meu estabelecimento</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+
+                <div class="page-header">
+
+                    <div>
+                        <h1>Agendamentos</h1>
+                        <p>Acompanhe, confirme e cancele os horários marcados pelos clientes.</p>
+                    </div>
+
+                </div>
+
+                <!-- filtros (div, e nao form, para nao herdar o estilo de card do form) -->
+                <div class="filtros">
+
+                    <div class="filtro-grupo">
+                        <label for="filtro-status">Status</label>
+                        <select id="filtro-status">
+                            <option value="">Todos</option>
+                            <option value="pendente">Agendado</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="concluido">Concluído</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div class="filtro-grupo">
+                        <label for="filtro-data">Data</label>
+                        <input type="date" id="filtro-data">
+                    </div>
+
+                    <button id="btn-limpar-filtros" class="btn-limpar" type="button">
+                        Limpar filtros
+                    </button>
+
+                </div>
+
+                <section class="services-section">
+
+                    <div class="table-container">
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data e hora</th>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="lista-agendamentos">
+                                <tr>
+                                    <td colspan="5">
+                                        Carregando agendamentos...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="js/config.js"></script>
+    
+
+</body>
+
+</html>
