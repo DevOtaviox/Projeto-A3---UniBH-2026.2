@@ -1,0 +1,222 @@
+/* estilos extras da tela de estabelecimento */
+/* usa as mesmas variaveis de cor do projeto, com valor de reserva */
+
+/* garante que o atributo hidden esconda o elemento */
+[hidden] {
+    display: none !important;
+}
+
+/* botoes */
+.btn-principal,
+.btn-secundario {
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s, opacity 0.2s;
+}
+
+.btn-principal {
+    border: none;
+    background: var(--azul-principal, #309BB8);
+    color: var(--branco, #ffffff);
+}
+
+.btn-principal:hover {
+    background: var(--azul-hover, #267f99);
+}
+
+.btn-secundario {
+    border: 1px solid var(--borda, #dce3e7);
+    background: transparent;
+    color: var(--cinza, #77838b);
+}
+
+.btn-secundario:hover {
+    background: var(--fundo, #f5f7f9);
+    color: var(--texto, #263238);
+}
+
+.btn-principal:active,
+.btn-secundario:active {
+    transform: scale(0.98);
+}
+
+.btn-principal:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* botao x do modal */
+.btn-fechar {
+    border: none;
+    background: transparent;
+    color: var(--cinza, #77838b);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-fechar:hover {
+    color: var(--texto, #263238);
+}
+
+/* mensagem de carregando ou erro */
+.estado-mensagem {
+    padding: 30px 0;
+    color: var(--cinza, #77838b);
+    font-size: 15px;
+}
+
+/* estado sem estabelecimento (botao central) */
+.estado-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: 520px;
+    margin: 60px auto;
+    padding: 40px 30px;
+    text-align: center;
+    background: var(--branco, #ffffff);
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 12px;
+}
+
+.estado-vazio h2 {
+    font-size: 20px;
+    color: var(--texto, #263238);
+}
+
+.estado-vazio p {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--cinza, #77838b);
+}
+
+/* cards de informacoes (modo leitura) */
+.card-info {
+    max-width: 760px;
+    margin-bottom: 24px;
+    padding: 26px 28px;
+    background: var(--branco, #ffffff);
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 12px;
+}
+
+.titulo-secao {
+    margin-bottom: 18px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--texto, #263238);
+}
+
+.lista-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 24px;
+}
+
+.item-info dt {
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cinza, #77838b);
+}
+
+.item-info dd {
+    font-size: 15px;
+    color: var(--texto, #263238);
+    word-break: break-word;
+}
+
+/* modal maior, com rolagem quando o conteudo e alto */
+.modal-largo {
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.titulo-modal {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--texto, #263238);
+}
+
+.dica-modal {
+    font-size: 13px;
+    color: var(--cinza, #77838b);
+}
+
+.mensagem-modal {
+    min-height: 16px;
+    font-size: 13px;
+    text-align: center;
+    color: #d64545;
+}
+
+/* o select recebe o mesmo estilo dos campos de texto */
+.input-group select {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 8px;
+    background: var(--branco, #ffffff);
+    color: var(--texto, #263238);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group select:focus {
+    border-color: var(--azul-principal, #309BB8);
+    box-shadow: 0 0 0 3px rgba(48, 155, 184, 0.12);
+}
+
+/* dias da semana */
+.dias-semana {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dia-opcao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    border: 1px solid var(--borda, #dce3e7);
+    border-radius: 8px;
+    background: var(--branco, #ffffff);
+    color: var(--texto, #263238);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.dia-opcao input {
+    width: auto;
+    padding: 0;
+    accent-color: var(--azul-principal, #309BB8);
+    cursor: pointer;
+}
+
+/* destaca o dia marcado */
+.dia-opcao:has(input:checked) {
+    border-color: var(--azul-principal, #309BB8);
+    background: rgba(48, 155, 184, 0.08);
+}
+
+@media (max-width: 640px) {
+
+    .lista-info {
+        grid-template-columns: 1fr;
+    }
+
+    .card-info {
+        padding: 20px;
+    }
+}

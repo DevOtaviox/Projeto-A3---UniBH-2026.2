@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgendaAi - Estabelecimento</title>
+
+    <!-- reaproveita o layout da tela de servicos (sidebar, topbar e modal) -->
+    <link rel="stylesheet" href="css/servicos.css">
+    <!-- estilos extras so desta tela -->
+    <link rel="stylesheet" href="css/estabelecimento.css">
+</head>
+
+<body>
+
+    <main class="dashboard-container">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <h1>AgendaAi</h1>
+                <p>Seu tempo, bem organizado</p>
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a href="inicio.html" class="menu-item">
+                    Início
+                </a>
+
+                <a href="servicos.html" class="menu-item">
+                    Serviços
+                </a>
+
+                <a href="agendamentos.html" class="menu-item">
+                    Agendamentos
+                </a>
+
+                <a href="estabelecimento.html" class="menu-item active">
+                    Estabelecimento
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-sair" type="button">
+                    Sair
+                </button>
+            </div>
+
+        </aside>
+
+        <section class="main-content">
+
+            <header class="topbar">
+                <h2>Meu estabelecimento</h2>
+
+                <div class="user-info">
+                    <span>Meu estabelecimento</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+
+                <div class="page-header">
+
+                    <div>
+                        <h1>Estabelecimento</h1>
+                        <p>Consulte e gerencie as informações do seu negócio.</p>
+                    </div>
+
+                    <!-- so aparece quando ja existe um estabelecimento cadastrado -->
+                    <button id="btn-editar" class="btn-principal" type="button" hidden>
+                        Alterar informações e horário
+                    </button>
+
+                </div>
+
+                <!-- estado 1: carregando (ou erro ao carregar) -->
+                <p id="estado-carregando" class="estado-mensagem">
+                    Carregando...
+                </p>
+
+                <!-- estado 2: ainda nao existe estabelecimento -->
+                <section id="estado-vazio" class="estado-vazio" hidden>
+
+                    <h2>Você ainda não tem um estabelecimento cadastrado</h2>
+                    <p>Cadastre o seu estabelecimento para começar a receber agendamentos.</p>
+
+                    <button id="btn-cadastrar" class="btn-principal" type="button">
+                        Cadastrar estabelecimento
+                    </button>
+
+                </section>
+
+                <!-- estado 3: estabelecimento cadastrado (modo leitura) -->
+                <section id="estado-cadastrado" hidden>
+
+                    <div class="card-info">
+                        <h2 class="titulo-secao">Informações</h2>
+
+                        <dl class="lista-info">
+                            <div class="item-info">
+                                <dt>Nome</dt>
+                                <dd id="info-nome">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>Endereço</dt>
+                                <dd id="info-endereco">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>Documento</dt>
+                                <dd id="info-documento">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>E-mail</dt>
+                                <dd id="info-email">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>Identificador</dt>
+                                <dd id="info-identificador">-</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="card-info">
+                        <h2 class="titulo-secao">Horário de funcionamento</h2>
+
+                        <dl class="lista-info">
+                            <div class="item-info">
+                                <dt>Dias de atendimento</dt>
+                                <dd id="info-dias">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>Horário</dt>
+                                <dd id="info-horario">-</dd>
+                            </div>
+
+                            <div class="item-info">
+                                <dt>Intervalo</dt>
+                                <dd id="info-intervalo">-</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- formulario de cadastro do estabelecimento -->
+    <div id="modal-cadastro" class="modal-overlay">
+
+        <div class="modal-content modal-largo">
+
+            <div class="modal-header">
+                <h2>Cadastrar estabelecimento</h2>
+
+                <button id="btn-fechar-cadastro" class="btn-fechar" type="button">
+                    &times;
+                </button>
+            </div>
+
+            <form id="form-cadastro">
+
+                <div class="input-group">
+                    <label for="cad-nome">Nome do estabelecimento</label>
+
+                    <input
+                        type="text"
+                        id="cad-nome"
+                        placeholder="Ex.: Barbearia do João"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label for="cad-endereco">Endereço</label>
+
+                    <input
+                        type="text"
+                        id="cad-endereco"
+                        placeholder="Rua, número, bairro e cidade"
+                        required
+                    >
+                </div>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="cad-tipo-documento">Tipo de documento</label>
+
+                        <select id="cad-tipo-documento">
+                            <option value="CPF">CPF</option>
+                            <option value="CNPJ">CNPJ</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cad-documento">Número do documento</label>
+
+                        <input
+                            type="text"
+                            id="cad-documento"
+                            inputmode="numeric"
+                            placeholder="Somente números"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <div class="input-group">
+                    <label for="cad-identificador">Identificador (usado no link de agendamento)</label>
+
+                    <input
+                        type="text"
+                        id="cad-identificador"
+                        placeholder="ex.: barbearia-do-joao"
+                        required
+                    >
+                </div>
+
+                <p class="dica-modal">Confirme o e-mail e a senha da sua conta para concluir o cadastro.</p>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="cad-email">E-mail da conta</label>
+
+                        <input
+                            type="email"
+                            id="cad-email"
+                            placeholder="seuemail@exemplo.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cad-senha">Senha da conta</label>
+
+                        <input
+                            type="password"
+                            id="cad-senha"
+                            placeholder="Sua senha"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <p id="mensagem-cadastro" class="mensagem-modal"></p>
+
+                <div class="modal-actions">
+
+                    <button id="btn-cancelar-cadastro" class="btn-secundario" type="button">
+                        Cancelar
+                    </button>
+
+                    <button id="btn-salvar-cadastro" class="btn-principal" type="submit">
+                        Cadastrar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- formulario para alterar informacoes e horario -->
+    <div id="modal-edicao" class="modal-overlay">
+
+        <div class="modal-content modal-largo">
+
+            <div class="modal-header">
+                <h2>Alterar informações e horário</h2>
+
+                <button id="btn-fechar-edicao" class="btn-fechar" type="button">
+                    &times;
+                </button>
+            </div>
+
+            <form id="form-edicao">
+
+                <h3 class="titulo-modal">Informações</h3>
+
+                <div class="input-group">
+                    <label for="edi-nome">Nome do estabelecimento</label>
+
+                    <input
+                        type="text"
+                        id="edi-nome"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label for="edi-endereco">Endereço</label>
+
+                    <input
+                        type="text"
+                        id="edi-endereco"
+                        required
+                    >
+                </div>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="edi-tipo-documento">Tipo de documento</label>
+
+                        <select id="edi-tipo-documento">
+                            <option value="CPF">CPF</option>
+                            <option value="CNPJ">CNPJ</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="edi-documento">Número do documento</label>
+
+                        <input
+                            type="text"
+                            id="edi-documento"
+                            inputmode="numeric"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <h3 class="titulo-modal">Horário de funcionamento</h3>
+
+                <!-- os dias sao criados pelo estabelecimento.js -->
+                <div id="edi-dias" class="dias-semana"></div>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="edi-abertura">Abertura</label>
+                        <input type="time" id="edi-abertura">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="edi-fechamento">Fechamento</label>
+                        <input type="time" id="edi-fechamento">
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+
+                    <div class="input-group">
+                        <label for="edi-inicio-intervalo">Início do intervalo (opcional)</label>
+                        <input type="time" id="edi-inicio-intervalo">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="edi-fim-intervalo">Fim do intervalo (opcional)</label>
+                        <input type="time" id="edi-fim-intervalo">
+                    </div>
+
+                </div>
+
+                <p id="mensagem-edicao" class="mensagem-modal"></p>
+
+                <div class="modal-actions">
+
+                    <button id="btn-cancelar-edicao" class="btn-secundario" type="button">
+                        Cancelar
+                    </button>
+
+                    <button id="btn-salvar-edicao" class="btn-principal" type="submit">
+                        Salvar alterações
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/estabelecimento.js"></script>
+
+</body>
+
+</html>
